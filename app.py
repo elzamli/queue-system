@@ -630,6 +630,12 @@ def get_logs():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    log_action('SYSTEM STARTUP', 'מערכת תורים מתחילה')
-    init_db()
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    log_action('SYSTEM STARTUP', 'מערכת מתחילה')
+    try:
+        init_db()
+        log_action('DATABASE READY', 'בסיס נתונים מוכן')
+    except Exception as e:
+        log_action('DATABASE ERROR', str(e), 'ERROR')
+    
+    port = int(os.getenv('PORT', 5000))
+    app.run(debug=False, port=port, host='0.0.0.0')
