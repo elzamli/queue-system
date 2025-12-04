@@ -145,6 +145,7 @@ def admin():
     return render_template('admin.html')
 
 # ========== API - נתונים בזמן אמת ==========
+""""
 @app.route('/api/center-data')
 def center_data():
     try:
@@ -173,6 +174,54 @@ def center_data():
     except Exception as e:
         log_action('API ERROR', f'center_data: {str(e)}', 'ERROR')
         return jsonify({'error': str(e)}), 500
+"""
+@app.route('/api/center-data')
+def center_data():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM stations ORDER BY id')
+        stations = cursor.fetchall()
+        
+        result = []
+        for station in stations:
+            # קבל את הלקוח הנוכחי
+            cursor.execute('''
+                SELECT customer_number FROM queue_entries 
+                WHERE station_id = ? AND status = 'called'
+                LIMIT 1
+            ''', (station['id'],))
+            current = cursor.fetchone()
+            current_number = current['customer_number'] if current else None
+            
+            # קבל את 10 הבאים בתור (בהמתנה)
+            cursor.execute('''
+                SELECT customer_number FROM queue_entries 
+                WHERE station_id = ? AND status = 'waiting'
+                ORDER BY created_at ASC
+                LIMIT 10
+            ''', (station['id'],))
+            waiting = cursor.fetchall()
+            waiting_list = [row['customer_number'] for row in waiting]
+            
+            result.append({
+                'id': station['id'],
+                'name': station['name'],
+                'description': station['description'],
+                'current_number': current_number,
+                'waiting_list': waiting_list
+            })
+        
+        conn.close()
+        return jsonify(result)
+    except Exception as e:
+        log_action('API ERROR', f'center_data: {str(e)}', 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
 
 @app.route('/api/stations-list')
 def stations_list():
@@ -201,8 +250,121 @@ def stations_list():
     except Exception as e:
         log_action('API ERROR', f'stations_list: {str(e)}', 'ERROR')
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/stations')
+def stations():
+    """תצוגה מחולקת של תחנות (5 בעמוד)"""
+    log_action('VIEW ACCESSED', 'מסך תחנות')
+    return render_template('stations.html')
+
 
 # ========== API - הוספה ==========
+@app.route('/api/add-entry', methods=['POST'])
+def add_entry():
+    """הוספת לקוח לתור - עם בדיקת duplicate בתחנות אחרות"""
+    data = request.json
+    station_id = data.get('station_id')
+    customer_number = data.get('customer_number')
+    transfer = data.get('transfer', False)  # flag להעברה
+    
+    if not station_id or not customer_number:
+        log_action('ADD ENTRY FAILED', 'נתונים חסרים', 'WARNING')
+        return jsonify({'error': 'נתונים חסרים'}), 400
+    
+    try:
+        customer_number = int(customer_number)
+    except ValueError:
+        log_action('ADD ENTRY FAILED', 'מספר לא חוקי', 'WARNING')
+        return jsonify({'error': 'מספר לקוח חייב להיות מספר'}), 400
+    
+    with db_lock:
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('BEGIN IMMEDIATE')
+            
+            # בדוק אם התחנה קיימת
+            cursor.execute('SELECT id, name FROM stations WHERE id = ?', (station_id,))
+            station = cursor.fetchone()
+            if not station:
+                conn.rollback()
+                conn.close()
+                log_action('ADD ENTRY FAILED', f'תחנה {station_id} לא קיימת', 'WARNING')
+                return jsonify({'error': 'התחנה לא קיימת'}), 404
+            
+            # בדוק אם הלקוח כבר בתור בתחנה זו
+            cursor.execute('''
+                SELECT id FROM queue_entries 
+                WHERE station_id = ? AND customer_number = ? AND status IN ('waiting', 'called')
+            ''', (station_id, customer_number))
+            
+            if cursor.fetchone():
+                conn.rollback()
+                conn.close()
+                log_action('ADD ENTRY FAILED', f'לקוח {customer_number} כבר בתחנה {station_id}', 'WARNING')
+                return jsonify({'error': 'הלקוח כבר בתור לתחנה זו'}), 400
+            
+            # בדוק אם הלקוח בתור בתחנה אחרת
+            cursor.execute('''
+                SELECT station_id FROM queue_entries 
+                WHERE customer_number = ? AND status IN ('waiting', 'called')
+                LIMIT 1
+            ''', (customer_number,))
+            
+            existing = cursor.fetchone()
+            
+            if existing:
+                other_station_id = existing['station_id']
+                cursor.execute('SELECT name FROM stations WHERE id = ?', (other_station_id,))
+                other_station = cursor.fetchone()
+                
+                # אם זה לא בדיקה להעברה, החזר בקשה להעברה
+                if not transfer:
+                    conn.rollback()
+                    conn.close()
+                    log_action('ADD ENTRY CONFLICT', f'לקוח {customer_number} כבר בתחנה {other_station["name"]}', 'WARNING')
+                    return jsonify({
+                        'error': f'לקוח {customer_number} נמצא כבר בתחנה {other_station["name"]}',
+                        'conflict': True,
+                        'customer_number': customer_number,
+                        'existing_station': other_station["name"],
+                        'new_station': station["name"]
+                    }), 409
+                
+                # אם זה בקשה להעברה, הסר מהתחנה הישנה
+                if transfer:
+                    cursor.execute('''
+                        DELETE FROM queue_entries 
+                        WHERE customer_number = ? AND station_id = ? AND status != 'completed'
+                    ''', (customer_number, other_station_id))
+                    log_action('CUSTOMER TRANSFERRED', f'לקוח {customer_number} הועבר מ-{other_station["name"]} ל-{station["name"]}')
+            
+            # הוסף לתחנה החדשה
+            cursor.execute('''
+                INSERT INTO queue_entries (station_id, customer_number, status)
+                VALUES (?, ?, 'waiting')
+            ''', (station_id, customer_number))
+            
+            conn.commit()
+            log_action('CUSTOMER ADDED', f'לקוח {customer_number} לתחנה {station["name"]}')
+            
+            return jsonify({
+                'success': True,
+                'message': f'לקוח {customer_number} נוסף לתור בהצלחה'
+            }), 201
+        
+        except Exception as e:
+            conn.rollback()
+            log_action('ADD ENTRY ERROR', str(e), 'ERROR')
+            return jsonify({'error': f'שגיאה: {str(e)}'}), 500
+        finally:
+            conn.close()
+
+
+
+
+""""
 @app.route('/api/add-entry', methods=['POST'])
 def add_entry():
     data = request.json
@@ -263,7 +425,7 @@ def add_entry():
             return jsonify({'error': f'שגיאה: {str(e)}'}), 500
         finally:
             conn.close()
-
+"""
 # ========== API - עובד ==========
 @app.route('/api/operator/login', methods=['POST'])
 def operator_login():

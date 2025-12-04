@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>עמדה הוספה - יום כיף</title>
+    <title>הוספת לקוח - יום כיף</title>
     <style>
         * {
             margin: 0;
@@ -17,26 +17,23 @@
             min-height: 100vh;
             padding: 20px;
             direction: rtl;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .container {
-            width: 100%;
-            max-width: 600px;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .card {
             background: white;
             border-radius: 15px;
             padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .header h1 {
@@ -50,18 +47,22 @@
             font-size: 14px;
         }
 
-        .kiosk-label {
-            background: #556B2F;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            display: inline-block;
-            font-size: 12px;
-            margin-bottom: 20px;
+        .info-box {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-right: 4px solid #556B2F;
+        }
+
+        .info-box p {
+            color: #333;
+            font-size: 13px;
+            line-height: 1.6;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
@@ -74,11 +75,10 @@
 
         select, input {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 16px;
-            font-family: inherit;
+            font-size: 14px;
             transition: all 0.3s ease;
         }
 
@@ -88,55 +88,8 @@
             box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1);
         }
 
-        input[type="number"] {
-            direction: ltr;
-            text-align: center;
-        }
-
-        .button-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        button {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+        select {
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-submit {
-            background: #556B2F;
-            color: white;
-            grid-column: 1 / -1;
-            font-size: 18px;
-        }
-
-        .btn-submit:hover:not(:disabled) {
-            background: #6B8E23;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(85, 107, 47, 0.3);
-        }
-
-        .btn-submit:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-reset {
-            background: #f5f5f5;
-            color: #333;
-            border: 1px solid #e0e0e0;
-        }
-
-        .btn-reset:hover {
-            background: #e0e0e0;
         }
 
         .message {
@@ -145,22 +98,23 @@
             margin-bottom: 20px;
             display: none;
             font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
         }
 
         .message.success {
             background: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
+            border: 2px solid #c3e6cb;
             display: block;
-            animation: slideIn 0.3s ease;
         }
 
         .message.error {
             background: #f8d7da;
             color: #721c24;
-            border: 1px solid #f5c6cb;
+            border: 2px solid #f5c6cb;
             display: block;
-            animation: slideIn 0.3s ease;
         }
 
         @keyframes slideIn {
@@ -174,24 +128,95 @@
             }
         }
 
-        .station-info {
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #666;
-            margin-top: 8px;
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
         }
 
-        .waiting-count {
-            color: #8B7355;
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add {
+            background: #556B2F;
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-add:hover:not(:disabled) {
+            background: #6B8E23;
+            transform: translateY(-2px);
+        }
+
+        .btn-add:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-clear {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .recent-list {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .recent-list h3 {
+            color: #333;
+            font-size: 13px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .recent-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border-right: 3px solid #556B2F;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .recent-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .recent-number {
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        .recent-station {
+            color: #666;
+            font-size: 12px;
         }
 
         .loading {
             text-align: center;
             display: none;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
         .spinner {
@@ -209,36 +234,124 @@
             100% { transform: rotate(360deg); }
         }
 
-        .recent-entries {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .recent-entries h3 {
-            color: #333;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-
-        .entry-item {
-            background: #f5f5f5;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            border-radius: 5px;
-            border-right: 3px solid #556B2F;
+        .loading p {
+            color: #556B2F;
+            font-weight: 600;
             font-size: 13px;
         }
 
-        .entry-number {
-            color: #8B7355;
-            font-weight: 600;
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            align-items: center;
+            justify-content: center;
+            direction: rtl;
         }
 
-        .entry-time {
-            color: #999;
-            font-size: 11px;
-            margin-top: 3px;
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h2 {
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .modal-content strong {
+            color: #556B2F;
+            font-weight: 700;
+        }
+
+        .modal-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .modal-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn-yes {
+            background: #4a7c59;
+            color: white;
+        }
+
+        .modal-btn-yes:hover {
+            background: #2d5f3f;
+            transform: scale(1.05);
+        }
+
+        .modal-btn-no {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-btn-no:hover {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
@@ -246,18 +359,21 @@
     <div class="container">
         <div class="card">
             <div class="header">
-                <h1>➕ הוסף עובד</h1>
+                <h1>➕ הוספת לקוח</h1>
                 <p>בחר תחנה והקלד מס' סידורי</p>
-                <div class="kiosk-label" id="kioskLabel">עמדה 1</div>
             </div>
 
             <div id="message" class="message"></div>
 
             <form id="addForm">
+                <div class="info-box">
+                    <p>📌 בחר את התחנה שלתחה הלקוח כעת ואנחנו נוסיף אותו לתור</p>
+                </div>
+
                 <div class="form-group">
                     <label for="stationSelect">בחר תחנה:</label>
                     <select id="stationSelect" required>
-                        <option value="">-- טוען תחנות... --</option>
+                        <option value="">טוען תחנות...</option>
                     </select>
                 </div>
 
@@ -275,83 +391,93 @@
 
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
-                    <p style="color: #556B2F;">שולח...</p>
+                    <p>משלח...</p>
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn-submit" id="submitBtn">הוסף לתור</button>
-                    <button type="reset" class="btn-reset">נקה</button>
+                    <button type="submit" class="btn-add" id="addBtn">הוסף לתור</button>
+                    <button type="reset" class="btn-clear">נקה</button>
                 </div>
             </form>
 
-            <div class="recent-entries" id="recentEntriesContainer" style="display: none;">
-                <h3>📝 הוספות אחרונות:</h3>
-                <div id="entriesList"></div>
+            <div class="recent-list">
+                <h3>📋 הוספות אחרונות</h3>
+                <div id="recentList">
+                    <div style="text-align: center; color: #999; font-size: 12px;">אין הוספות עדיין</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div id="transferModal" class="modal">
+        <div class="modal-content">
+            <h2>⚠️ הלקוח כבר בתור!</h2>
+            <p id="modalMessage"></p>
+            <p style="color: #556B2F; font-weight: 600; margin-top: 20px;">האם אתה מעוניין להעביר אותו?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-yes" onclick="transferCustomer()">✅ כן, העבר</button>
+                <button class="modal-btn modal-btn-no" onclick="closeTransferModal()">❌ ביטול</button>
             </div>
         </div>
     </div>
 
     <script>
-        let kioskId = new URLSearchParams(window.location.search).get('kiosk_id') || '1';
         let recentEntries = [];
+        let transferData = null;
 
-        // עדכון תווית עמדה
-        document.getElementById('kioskLabel').textContent = `עמדה ${kioskId}`;
-
-        // טעינת רשימת תחנות
+        // טוען תחנות בהתחלה
         async function loadStations() {
             try {
                 const response = await fetch('/api/stations-list');
                 const stations = await response.json();
-                
+
                 const select = document.getElementById('stationSelect');
-                select.innerHTML = '<option value="">-- בחר תחנה --</option>';
-
-                stations.forEach(station => {
-                    const option = document.createElement('option');
-                    option.value = station.id;
-                    option.textContent = `${station.name} (בהמתנה: ${station.waiting_count})`;
-                    select.appendChild(option);
-                });
+                select.innerHTML = stations.map(station => 
+                    `<option value="${station.id}">${station.name} (${station.waiting_count} בתור)</option>`
+                ).join('');
             } catch (error) {
-                console.error('שגיאה בטעינת תחנות:', error);
-                showMessage('שגיאה בטעינת התחנות', 'error');
+                console.error('Error loading stations:', error);
             }
         }
 
-        // הצגת הודעה
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
+        // טוען תחנות כל 5 שניות (רק עדכון הdropdown)
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/stations-list');
+                const stations = await response.json();
 
-            if (type === 'success') {
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 3000);
+                const select = document.getElementById('stationSelect');
+                const currentValue = select.value;
+
+                select.innerHTML = stations.map(station => 
+                    `<option value="${station.id}">${station.name} (${station.waiting_count} בתור)</option>`
+                ).join('');
+
+                // שמור את הערך הנוכחי
+                select.value = currentValue || stations[0].id;
+            } catch (error) {
+                console.error('Error updating stations:', error);
             }
-        }
+        }, 5000);
 
-        // הגשת הטופס
+        // Form Submit
         document.getElementById('addForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const stationId = document.getElementById('stationSelect').value;
+            const station = document.getElementById('stationSelect').value;
             const customerNumber = document.getElementById('customerNumber').value;
+            const messageDiv = document.getElementById('message');
+            const addBtn = document.getElementById('addBtn');
 
-            if (!stationId) {
-                showMessage('⚠️ בחר תחנה', 'error');
+            if (!station || !customerNumber) {
+                messageDiv.textContent = '⚠️ אנא מלא את כל השדות';
+                messageDiv.className = 'message error';
                 return;
             }
 
-            if (!customerNumber) {
-                showMessage('⚠️ הקלד מס\'', 'error');
-                return;
-            }
-
-            // הצגת loader
             document.getElementById('loading').style.display = 'block';
-            document.getElementById('submitBtn').disabled = true;
+            addBtn.disabled = true;
 
             try {
                 const response = await fetch('/api/add-entry', {
@@ -360,69 +486,148 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        station_id: parseInt(stationId),
-                        customer_number: parseInt(customerNumber)
+                        station_id: parseInt(station),
+                        customer_number: parseInt(customerNumber),
+                        transfer: false
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage(`✅ ${data.message}`, 'success');
-                    
-                    // הוסף להיסטוריה
-                    const select = document.getElementById('stationSelect');
-                    const stationName = select.options[select.selectedIndex].text.split(' (')[0];
-                    
+                    messageDiv.textContent = `✅ ${data.message}`;
+                    messageDiv.className = 'message success';
+
+                    // הוסף לרשימת האחרונות
+                    const stationSelect = document.getElementById('stationSelect');
+                    const stationName = stationSelect.options[stationSelect.selectedIndex].text.split(' (')[0];
                     recentEntries.unshift({
-                        station: stationName,
                         number: customerNumber,
-                        time: new Date().toLocaleTimeString('he-IL')
+                        station: stationName
                     });
+                    if (recentEntries.length > 5) recentEntries.pop();
+                    updateRecentList();
 
-                    if (recentEntries.length > 5) {
-                        recentEntries.pop();
-                    }
-
-                    updateRecentEntries();
-
-                    // נקה הטופס
                     document.getElementById('addForm').reset();
-                    document.getElementById('customerNumber').focus();
+                    document.getElementById('stationSelect').focus();
+
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 3000);
+                } else if (response.status === 409 && data.conflict) {
+                    // הלקוח כבר בתור בתחנה אחרת
+                    showTransferModal(data);
                 } else {
-                    showMessage(`❌ ${data.error}`, 'error');
+                    messageDiv.textContent = `❌ ${data.error}`;
+                    messageDiv.className = 'message error';
                 }
             } catch (error) {
                 console.error('שגיאה:', error);
-                showMessage('❌ שגיאה בהוספת הלקוח', 'error');
+                messageDiv.textContent = '❌ שגיאה בהוספה';
+                messageDiv.className = 'message error';
             } finally {
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('submitBtn').disabled = false;
+                addBtn.disabled = false;
             }
         });
 
-        // עדכון רשימה אחרונה
-        function updateRecentEntries() {
+        function updateRecentList() {
+            const recentList = document.getElementById('recentList');
+            
             if (recentEntries.length === 0) {
-                document.getElementById('recentEntriesContainer').style.display = 'none';
+                recentList.innerHTML = '<div style="text-align: center; color: #999; font-size: 12px;">אין הוספות עדיין</div>';
                 return;
             }
 
-            document.getElementById('recentEntriesContainer').style.display = 'block';
-            const list = document.getElementById('entriesList');
-            list.innerHTML = recentEntries.map((entry, index) => `
-                <div class="entry-item">
-                    <div><span class="entry-number">מס' ${entry.number}</span> → ${entry.station}</div>
-                    <div class="entry-time">${entry.time}</div>
-                </div>
-            `).join('');
+            recentList.innerHTML = recentEntries.map(entry => 
+                `<div class="recent-item">
+                    <span class="recent-number">${entry.number}</span>
+                    <span class="recent-station">${entry.station}</span>
+                </div>`
+            ).join('');
         }
 
-        // טעינה בעת טעינת העמוד
-        loadStations();
+        // Transfer Modal Functions
+        function showTransferModal(data) {
+            transferData = data;
+            const modal = document.getElementById('transferModal');
+            const message = document.getElementById('modalMessage');
 
-        // עדכון רשימת תחנות כל 5 שניות
-        setInterval(loadStations, 5000);
+            message.innerHTML = `לקוח <strong>${data.customer_number}</strong> נמצא כבר בתחנה <strong>${data.existing_station}</strong><br><br>
+            האם אתה מעוניין להעבירו לתחנה <strong>${data.new_station}</strong>?`;
+
+            modal.classList.add('active');
+        }
+
+        function closeTransferModal() {
+            const modal = document.getElementById('transferModal');
+            modal.classList.remove('active');
+            transferData = null;
+        }
+
+        async function transferCustomer() {
+            if (!transferData) return;
+
+            const messageDiv = document.getElementById('message');
+            const addBtn = document.getElementById('addBtn');
+            const station = document.getElementById('stationSelect').value;
+
+            document.getElementById('loading').style.display = 'block';
+            addBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/add-entry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        station_id: parseInt(station),
+                        customer_number: transferData.customer_number,
+                        transfer: true
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = `✅ ${data.message}`;
+                    messageDiv.className = 'message success';
+
+                    // הוסף לרשימת האחרונות
+                    const stationSelect = document.getElementById('stationSelect');
+                    const stationName = stationSelect.options[stationSelect.selectedIndex].text.split(' (')[0];
+                    recentEntries.unshift({
+                        number: transferData.customer_number,
+                        station: stationName
+                    });
+                    if (recentEntries.length > 5) recentEntries.pop();
+                    updateRecentList();
+
+                    document.getElementById('addForm').reset();
+                    closeTransferModal();
+
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 3000);
+                } else {
+                    messageDiv.textContent = `❌ ${data.error}`;
+                    messageDiv.className = 'message error';
+                    closeTransferModal();
+                }
+            } catch (error) {
+                console.error('שגיאה:', error);
+                messageDiv.textContent = '❌ שגיאה בהעברה';
+                messageDiv.className = 'message error';
+                closeTransferModal();
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                addBtn.disabled = false;
+            }
+        }
+
+        // טוען תחנות בהתחלה
+        loadStations();
     </script>
 </body>
 </html>
