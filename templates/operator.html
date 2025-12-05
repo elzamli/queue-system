@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>עובד תחנה - יום כיף</title>
+    <title>עובד בתחנה - יום כיף</title>
     <style>
         * {
             margin: 0;
@@ -24,41 +24,230 @@
             margin: 0 auto;
         }
 
-        .login-screen {
-            display: flex;
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .station-info {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #556B2F;
+        }
+
+        .station-name {
+            font-size: 24px;
+            color: #2d3436;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .operator-name {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .display-section {
+            background: linear-gradient(135deg, #556B2F 0%, #6B8E23 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .display-label {
+            font-size: 16px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .current-number {
+            font-size: 80px;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .no-customer {
+            font-size: 20px;
+            opacity: 0.8;
+        }
+
+        .queue-info {
+            text-align: center;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 14px;
+            border-right: 3px solid #556B2F;
+        }
+
+        .buttons-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 14px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #4a7c59;
+            color: white;
+            grid-column: 1 / -1;
+            font-size: 16px;
+            padding: 16px;
+        }
+
+        .btn-primary:hover {
+            background: #2d5f3f;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #8B4513;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #6B3410;
+            transform: translateY(-2px);
+        }
+
+        .btn-release {
+            background: #8B0000;
+            color: white;
+        }
+
+        .btn-release:hover {
+            background: #a00000;
+            transform: translateY(-2px);
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
-            z-index: 1000;
         }
 
-        .login-card {
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
             background: white;
-            padding: 50px;
+            padding: 35px;
             border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             max-width: 400px;
-            width: 100%;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
         }
 
-        .login-card h1 {
+        @keyframes modalSlideIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
             text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
             color: #2d3436;
-            margin-bottom: 10px;
-            font-size: 28px;
+            font-size: 22px;
+            margin-bottom: 5px;
         }
 
-        .login-card p {
-            text-align: center;
+        .modal-header p {
             color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .form-group {
@@ -70,515 +259,495 @@
             color: #333;
             font-weight: 600;
             margin-bottom: 10px;
+            font-size: 13px;
         }
 
-        input[type="password"] {
+        select {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 16px;
-            direction: ltr;
-            text-align: center;
-            letter-spacing: 2px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        input[type="password"]:focus {
+        select:focus {
             outline: none;
             border-color: #556B2F;
             box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1);
         }
 
-        .btn-login {
-            width: 100%;
-            padding: 15px;
-            background: #556B2F;
-            color: white;
+        .modal-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 11px;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
         }
 
-        .btn-login:hover {
-            background: #6B8E23;
-            transform: translateY(-2px);
+        .modal-btn-submit {
+            background: #4a7c59;
+            color: white;
         }
 
-        .btn-login:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
+        .modal-btn-submit:hover {
+            background: #2d5f3f;
         }
 
-        .message {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
+        .modal-btn-cancel {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .loading {
             text-align: center;
-            font-size: 14px;
-        }
-
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            display: block;
-        }
-
-        .main-screen {
             display: none;
+            margin: 15px 0;
         }
 
-        .header {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #556B2F;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
         }
 
-        .header h1 {
-            color: #2d3436;
-            margin-bottom: 10px;
-            font-size: 28px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .operator-info {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .operator-name {
+        .loading p {
             color: #556B2F;
             font-weight: 600;
-        }
-
-        .current-display {
-            background: linear-gradient(135deg, #556B2F 0%, #8B7355 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .current-label {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .current-number {
-            font-size: 72px;
-            font-weight: bold;
-            line-height: 1;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        button {
-            padding: 15px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-call {
-            background: #556B2F;
-            color: white;
-        }
-
-        .btn-call:hover:not(:disabled) {
-            background: #6B8E23;
-            transform: translateY(-2px);
-        }
-
-        .btn-complete {
-            background: #4a7c59;
-            color: white;
-        }
-
-        .btn-complete:hover:not(:disabled) {
-            background: #5a9970;
-            transform: translateY(-2px);
-        }
-
-        .btn-skip {
-            background: #8B7355;
-            color: white;
-        }
-
-        .btn-skip:hover {
-            background: #A0826D;
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            opacity: 0.6;
-            transform: none;
-        }
-
-        .queue-panel {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .queue-panel h2 {
-            color: #2d3436;
-            margin-bottom: 20px;
-            font-size: 18px;
-        }
-
-        .queue-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .queue-item {
-            background: #f5f5f5;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            border-right: 3px solid #556B2F;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .queue-item.called {
-            background: #e3f2e3;
-            border-right-color: #4a7c59;
-        }
-
-        .queue-item.completed {
-            background: #e8f5e9;
-            opacity: 0.6;
-        }
-
-        .queue-number {
-            font-weight: bold;
-            color: #8B7355;
-            font-size: 16px;
-        }
-
-        .queue-status {
-            display: inline-block;
-            padding: 3px 8px;
-            background: #8B7355;
-            color: white;
-            border-radius: 12px;
-            font-size: 11px;
-            text-transform: uppercase;
-        }
-
-        .queue-status.called {
-            background: #4a7c59;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
-        .btn-logout {
-            background: #ccc;
-            color: #333;
-            border: 1px solid #bbb;
-        }
-
-        .btn-logout:hover {
-            background: #bbb;
+            font-size: 13px;
         }
 
         @media (max-width: 768px) {
-            .action-buttons {
-                grid-template-columns: 1fr;
+            .main-card {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 32px;
             }
 
             .current-number {
-                font-size: 48px;
+                font-size: 56px;
+            }
+
+            .buttons-group {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-primary {
+                grid-column: 1 / -1;
+            }
+
+            .modal-content {
+                padding: 25px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- מסך כניסה -->
-    <div class="login-screen" id="loginScreen">
-        <div class="login-card">
-            <h1>🔐 כניסה עובד</h1>
-            <p>הקלד את קוד העובד שלך</p>
-            
-            <div id="loginMessage" class="message error"></div>
-
-            <div class="form-group">
-                <label for="codeInput">קוד עובד:</label>
-                <input 
-                    type="password" 
-                    id="codeInput" 
-                    placeholder="הקלד קוד"
-                    autocomplete="off"
-                >
-            </div>
-
-            <button type="button" class="btn-login" id="loginBtn" onclick="login()">
-                כנס
-            </button>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 יום כיף - עובד בתחנה</h1>
+            <p id="stationDisplay">טוען...</p>
         </div>
-    </div>
 
-    <!-- מסך ראשי -->
-    <div class="main-screen" id="mainScreen">
-        <div class="container">
-            <div class="header">
-                <h1 id="stationName">תחנה</h1>
-                <div class="operator-info">
-                    עובד: <span class="operator-name" id="operatorName">-</span>
-                </div>
+        <div class="main-card">
+            <div class="station-info">
+                <div class="station-name" id="stationName">תחנה</div>
+                <div class="operator-name" id="operatorName">עובד</div>
             </div>
 
-            <div class="current-display">
-                <div class="current-label">משחק כעת</div>
+            <div id="message" class="message"></div>
+
+            <div class="display-section">
+                <div class="display-label">🔔 משחק כעת</div>
                 <div class="current-number" id="currentNumber">-</div>
             </div>
 
-            <div class="action-buttons">
-                <button class="btn-call" id="callNextBtn" onclick="callNext()" disabled>
+            <div class="queue-info" id="queueInfo">
+                מספר במתינה: <strong id="waitingCount">0</strong>
+            </div>
+
+            <div class="buttons-group">
+                <button class="btn-primary" id="callNextBtn" onclick="callNext()">
                     📢 קרא הבא
                 </button>
-                <button class="btn-complete" id="completeBtn" onclick="completeCustomer()" disabled>
-                    ✅ סיים
+                <button class="btn-secondary" onclick="openTransferModal()">
+                    ↔️ העברה לתור אחר
                 </button>
-                <button class="btn-skip" id="skipBtn" onclick="skipCustomer()" disabled>
-                    ⏭️ דלג
+                <button class="btn-release" onclick="finishCustomer()">
+                    🔓 העברה לשחרור
                 </button>
             </div>
 
-            <div class="queue-panel">
-                <h2>📋 הרשימה</h2>
-                <div class="queue-list" id="queueList">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">⏳</div>
-                        <p>טוען...</p>
-                    </div>
-                </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>משלח...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div id="transferModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>↔️ העברה לתור אחר</h2>
+                <p id="modalCustomerInfo">בחר תחנה להעברה</p>
             </div>
 
-            <div style="margin-top: 20px;">
-                <button class="btn-logout" onclick="logout()" style="width: 100%;">
-                    ← יציאה
+            <div class="form-group">
+                <label for="transferStation">בחר תחנה:</label>
+                <select id="transferStation">
+                    <option value="">טוען תחנות...</option>
+                </select>
+            </div>
+
+            <div class="loading" id="transferLoading">
+                <div class="spinner"></div>
+                <p>משלח...</p>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-submit" onclick="confirmTransfer()">
+                    ✅ העבר
+                </button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeTransferModal()">
+                    ❌ ביטול
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        let currentOperator = null;
-        let currentStation = null;
+        let stationId = null;
+        let operatorCode = null;
+        let currentCustomer = null;
 
-        // כניסה
-        async function login() {
-            const code = document.getElementById('codeInput').value;
-            const btn = document.getElementById('loginBtn');
+        // קבל את הקוד מה-URL
+        function getOperatorCode() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('code');
+        }
 
-            if (!code) {
-                showLoginMessage('אנא הקלד קוד', 'error');
+        // קבל את ה-stationId מה-path
+        function getStationId() {
+            const path = window.location.pathname;
+            const match = path.match(/\/operator(?:\/(\d+))?/);
+            return match ? (match[1] || 1) : 1;
+        }
+
+        // טוען נתונים בהתחלה
+        async function init() {
+            stationId = getStationId();
+            operatorCode = getOperatorCode();
+
+            if (!operatorCode) {
+                window.location.href = '/operator';
                 return;
             }
 
-            btn.disabled = true;
+            await loadStationInfo();
+            await loadTransferStations();
+            await updateDisplay();
 
+            // עדכון כל 2 שניות
+            setInterval(updateDisplay, 2000);
+        }
+
+        // טוען מידע התחנה
+        async function loadStationInfo() {
             try {
-                const response = await fetch('/api/operator/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code })
-                });
+                const response = await fetch('/api/center-data');
+                const stations = await response.json();
+                const station = stations.find(s => s.id == stationId);
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentOperator = data;
-                    currentStation = data.station_id;
-                    showMainScreen();
-                    loadStationData();
-                } else {
-                    showLoginMessage('❌ קוד לא נכון', 'error');
+                if (station) {
+                    document.getElementById('stationName').textContent = station.name;
+                    document.getElementById('stationDisplay').textContent = station.name;
                 }
             } catch (error) {
-                console.error('שגיאה:', error);
-                showLoginMessage('❌ שגיאה בכניסה', 'error');
-            } finally {
-                btn.disabled = false;
+                console.error('Error loading station info:', error);
             }
         }
 
-        function showLoginMessage(msg, type) {
-            const div = document.getElementById('loginMessage');
-            div.textContent = msg;
-            div.className = `message ${type}`;
-        }
-
-        function showMainScreen() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainScreen').style.display = 'block';
-            document.getElementById('operatorName').textContent = currentOperator.operator_name;
-            
-            // טעינת שם התחנה
-            fetch(`/api/station/${currentStation}`)
-                .then(r => r.json())
-                .then(data => {
-                    document.getElementById('stationName').textContent = data.name;
-                });
-        }
-
-        async function loadStationData() {
+        // טוען רשימת תחנות להעברה
+        async function loadTransferStations() {
             try {
-                const response = await fetch(`/api/station/${currentStation}`);
-                const data = await response.json();
+                const response = await fetch('/api/stations-list');
+                const stations = await response.json();
 
-                // עדכון מספר נוכחי
-                document.getElementById('currentNumber').textContent = data.current_number || '-';
-
-                // עדכון כפתורים
-                const hasWaiting = data.entries.some(e => e.status === 'waiting');
-                const hasCalled = data.entries.some(e => e.status === 'called');
-
-                document.getElementById('callNextBtn').disabled = !hasWaiting;
-                document.getElementById('completeBtn').disabled = !hasCalled;
-                document.getElementById('skipBtn').disabled = !hasCalled;
-
-                // עדכון רשימה
-                updateQueueList(data.entries);
+                const select = document.getElementById('transferStation');
+                select.innerHTML = stations
+                    .filter(s => s.id != stationId)
+                    .map(s => `<option value="${s.id}">${s.name}</option>`)
+                    .join('');
             } catch (error) {
-                console.error('שגיאה:', error);
+                console.error('Error loading stations:', error);
             }
         }
 
-        function updateQueueList(entries) {
-            const list = document.getElementById('queueList');
-
-            if (!entries || entries.length === 0) {
-                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✨</div><p>התור ריק</p></div>';
-                return;
-            }
-
-            list.innerHTML = entries.map(entry => {
-                let statusClass = '';
-                let statusText = '';
-
-                if (entry.status === 'waiting') {
-                    statusClass = '';
-                    statusText = 'בהמתנה';
-                } else if (entry.status === 'called') {
-                    statusClass = 'called';
-                    statusText = 'בשירות';
-                } else if (entry.status === 'completed') {
-                    statusClass = 'completed';
-                    statusText = 'הושלם';
-                }
-
-                return `
-                    <div class="queue-item ${entry.status}">
-                        <div class="queue-number">${entry.customer_number}</div>
-                        <div class="queue-status ${statusClass}">${statusText}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function callNext() {
+        // עדכון מסך התצוגה
+        async function updateDisplay() {
             try {
-                const response = await fetch(`/api/call-next/${currentStation}`, { method: 'POST' });
-                const data = await response.json();
+                const response = await fetch('/api/center-data');
+                const stations = await response.json();
+                const station = stations.find(s => s.id == stationId);
 
-                if (response.ok) {
-                    loadStationData();
-                } else {
-                    alert(data.error);
-                }
-            } catch (error) {
-                console.error('שגיאה:', error);
-            }
-        }
-
-        async function completeCustomer() {
-            // קבל את הלקוח הנוכחי בשירות
-            try {
-                const response = await fetch(`/api/station/${currentStation}`);
-                const data = await response.json();
-                const calledEntry = data.entries.find(e => e.status === 'called');
-
-                if (calledEntry) {
-                    const completeResponse = await fetch(`/api/complete/${calledEntry.id}`, { method: 'POST' });
-                    if (completeResponse.ok) {
-                        loadStationData();
+                if (station) {
+                    // עדכן את המספר הנוכחי
+                    if (station.current_number) {
+                        document.getElementById('currentNumber').textContent = station.current_number;
+                        currentCustomer = station.current_number;
+                    } else {
+                        document.getElementById('currentNumber').innerHTML = '<span class="no-customer">אין בשירות</span>';
+                        currentCustomer = null;
                     }
+
+                    // עדכן את מספר הממתינים
+                    const waitingCount = station.waiting_list ? station.waiting_list.length : 0;
+                    document.getElementById('waitingCount').textContent = waitingCount;
                 }
             } catch (error) {
-                console.error('שגיאה:', error);
+                console.error('Error updating display:', error);
             }
         }
 
-        async function skipCustomer() {
-            try {
-                const response = await fetch(`/api/station/${currentStation}`);
-                const data = await response.json();
-                const calledEntry = data.entries.find(e => e.status === 'called');
+        // קרא את הבא
+        
+async function callNext() {
+    if (!operatorCode) {
+        showMessage('❌ לא נמצא קוד עובד', 'error');
+        return;
+    }
 
-                if (calledEntry) {
-                    const deleteResponse = await fetch(`/api/remove/${calledEntry.id}`, { method: 'DELETE' });
-                    if (deleteResponse.ok) {
-                        loadStationData();
-                    }
-                }
-            } catch (error) {
-                console.error('שגיאה:', error);
-            }
-        }
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('callNextBtn').disabled = true;
 
-        function logout() {
-            currentOperator = null;
-            currentStation = null;
-            document.getElementById('codeInput').value = '';
-            document.getElementById('loginMessage').style.display = 'none';
-            document.getElementById('mainScreen').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'flex';
-        }
-
-        // עדכון אוטומטי כל 2 שניות
-        document.getElementById('codeInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') login();
+    try {
+        const response = await fetch(`/api/call-next/${stationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                operator_code: operatorCode
+            })
         });
 
-        setInterval(() => {
-            if (currentStation) {
-                loadStationData();
+        const data = await response.json();
+
+        if (response.ok) {
+            showMessage(`✅ לקוח ${data.customer_number} נקרא`, 'success');
+            await updateDisplay();
+        } else {
+            showMessage(`❌ ${data.error || 'לא יכול לקרוא הבא'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ שגיאה בקריאה', 'error');
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('callNextBtn').disabled = false;
+    }
+}
+        // פתח modal להעברה
+        function openTransferModal() {
+            if (!currentCustomer) {
+                showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
+                return;
             }
-        }, 2000);
+
+            document.getElementById('modalCustomerInfo').textContent = `העברת לקוח ${currentCustomer}`;
+            document.getElementById('transferModal').classList.add('active');
+        }
+
+        // סגור modal
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.remove('active');
+        }
+
+        // אישור העברה
+        async function confirmTransfer() {
+            if (!currentCustomer) {
+                showMessage('❌ אין לקוח בשירות', 'error');
+                return;
+            }
+
+            const targetStationId = document.getElementById('transferStation').value;
+            if (!targetStationId) {
+                showMessage('❌ בחר תחנה', 'error');
+                return;
+            }
+
+            document.getElementById('transferLoading').style.display = 'block';
+
+            try {
+                const response = await fetch('/api/add-entry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        station_id: parseInt(targetStationId),
+                        customer_number: currentCustomer,
+                        transfer: true
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    closeTransferModal();
+                    await updateDisplay();
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('❌ שגיאה בהעברה', 'error');
+            } finally {
+                document.getElementById('transferLoading').style.display = 'none';
+            }
+        }
+
+        // העברה לעמדת שחרור
+        async function finishCustomer() {
+    if (!currentCustomer) {
+        showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
+        return;
+    }
+
+    // בקשה לאישור
+    if (!confirm(`האם אתה בטוח שאתה רוצה לסיים את הלקוח ${currentCustomer} מהמערכת?`)) {
+        return;
+    }
+
+    document.getElementById('loading').style.display = 'block';
+
+    try {
+        const response = await fetch('/api/finish-customer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                customer_number: currentCustomer
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showMessage(`✅ ${data.message}`, 'success');
+            currentCustomer = null;
+            await updateDisplay();
+        } else {
+            showMessage(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ שגיאה בסיום לקוח', 'error');
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+
+        // סגור modal בלחיצה על X
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('transferModal');
+            if (e.target === modal) {
+                closeTransferModal();
+            }
+        });
+
+        // בדוק אם יש קוד בURL
+if (!getOperatorCode()) {
+    // אם אין קוד - הצג מסך הזדהות
+    showLoginScreen();
+} else {
+    // אם יש קוד - הצג את מסך התחנה
+    init();
+}
+
+function showLoginScreen() {
+    document.querySelector('.main-card').innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 20px;">🔐</div>
+            <h2 style="color: #2d3436; margin-bottom: 30px; font-size: 24px;">הזדהות עובד</h2>
+            
+            <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 30px; border-right: 3px solid #556B2F; color: #333; font-size: 14px;">
+                📌 הקלד את קוד העובד שלך כדי להתחיל
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #333; font-weight: 600; margin-bottom: 10px; text-align: right;">קוד עובד:</label>
+                <input type="password" id="operatorCode" placeholder="הקלד קוד" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; text-align: center;" autofocus>
+            </div>
+            
+            <button onclick="loginOperator()" style="width: 100%; padding: 14px; background: #4a7c59; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                🔓 כנס
+            </button>
+            
+            <div id="loginMessage" style="margin-top: 20px;"></div>
+        </div>
+    `;
+}
+
+function loginOperator() {
+    const code = document.getElementById('operatorCode').value;
+    
+    if (!code) {
+        showLoginError('⚠️ הקלד קוד עובד');
+        return;
+    }
+    
+    // בדוק אם הקוד תקין (4 ספרות)
+    if (!/^\d{4}$/.test(code)) {
+        showLoginError('❌ קוד חייב להיות 4 ספרות');
+        return;
+    }
+    
+    // עבור להעמדה עם הקוד בURL
+    window.location.href = `/operator?code=${code}`;
+}
+
+function showLoginError(message) {
+    const messageDiv = document.getElementById('loginMessage');
+    messageDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 12px; border-radius: 8px; border: 1px solid #f5c6cb;">${message}</div>`;
+}
+
+// מאזין ל-Enter בinput
+document.addEventListener('keypress', (e) => {
+    const input = document.getElementById('operatorCode');
+    if (input && e.key === 'Enter') {
+        loginOperator();
+    }
+});
     </script>
 </body>
 </html>
