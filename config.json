@@ -2,22 +2,90 @@
   "stations": [
     {
       "id": 1,
-      "name": "באולינג 1",
-      "description": "זירת באולינג 1",
-      "queue_group_id": "bowling"
+      "name": "טנא 1",
+      "description": "טנא  ",
+      "queue_group_id": "tana"
     },
     {
       "id": 2,
-      "name": "באולינג 2",
-      "description": "זירת באולינג 2",
-      "queue_group_id": "bowling"
+      "name": "טנא 2",
+      "description": "טנא  ",
+      "queue_group_id": "tana"
     },
     {
       "id": 3,
-      "name": "פינג פונג",
-      "description": "זירת פינג פונג",
+      "name": "אספקה",
+      "description": "  אספקה",
       "queue_group_id": null
     }
+{
+      "id": 4,
+      "name": "רפואה 1",
+      "description": "רפואה  ",
+      "queue_group_id": "refoa"
+    },
+    {
+      "id": 5,
+      "name": "רפואה 2",
+      "description": "רפואה  ",
+      "queue_group_id": "refoa"
+    },
+    {
+      "id": 6,
+      "name": "משאן",
+      "description": "  משאן",
+      "queue_group_id": null
+    }
+{
+      "id": 7,
+      "name": "מצ ",
+      "description": "מצ  ",
+      "queue_group_id": null
+    },
+    {
+      "id": 8,
+      "name": "מנהלה 1",
+      "description": "מנהלה ",
+      "queue_group_id": "minhala"
+    },
+    {
+      "id": 9,
+      "name": "מנהלה 2",
+      "description": "  מנהלה",
+      "queue_group_id": "minhala"
+    }
+{
+      "id": 10,
+      "name": "אגם 1",
+      "description": "אגם  ",
+      "queue_group_id": "agam"
+    },
+    {
+      "id": 11,
+      "name": "אגם 2",
+      "description": "אגם  ",
+      "queue_group_id": "agam"
+    },
+    {
+      "id": 12,
+      "name": "מודיעין 1",
+      "description": "  מודיעין",
+      "queue_group_id": "modin"
+    }
+{
+      "id": 13,
+      "name": "מודיעין 2",
+      "description": "מודיעין  ",
+      "queue_group_id": "modin"
+    },
+    {
+      "id": 14,
+    "name": "מודיעין 3",
+      "description": "מודיעין  ",
+      "queue_group_id": "modin"
+    }
+   
+
   ],
   "operators": [
     {
@@ -38,6 +106,74 @@
       "station_id": 3,
       "name": "Operator 3"
     }
+ {
+      "id": 4,
+      "code": "1001",
+      "station_id": 4,
+      "name": "Operator 1"
+    },
+    {
+      "id": 5,
+      "code": "2002",
+      "station_id": 25,
+      "name": "Operator 2"
+    },
+    {
+      "id": 6,
+      "code": "3003",
+      "station_id": 6,
+      "name": "Operator 3"
+    }
+ {
+      "id": 7,
+      "code": "1001",
+      "station_id": 7,
+      "name": "Operator 1"
+    },
+    {
+      "id": 8,
+      "code": "2002",
+      "station_id": 8,
+      "name": "Operator 2"
+    },
+    {
+      "id": 9,
+      "code": "3003",
+      "station_id": 9,
+      "name": "Operator 3"
+    }
+ {
+      "id": 10,
+      "code": "1001",
+      "station_id": 10,
+      "name": "Operator 1"
+    },
+    {
+      "id": 11,
+      "code": "2002",
+      "station_id": 11,
+      "name": "Operator 2"
+    },
+    {
+      "id": 12,
+      "code": "3003",
+      "station_id": 12,
+      "name": "Operator 3"
+    }
+ {
+      "id": 13,
+      "code": "1001",
+      "station_id": 13,
+      "name": "Operator 1"
+    },
+    {
+      "id": 14,
+      "code": "2002",
+      "station_id": 14,
+      "name": "Operator 2"
+    },
+    
+
   ],
   "admin_password": "admin123"
 }
