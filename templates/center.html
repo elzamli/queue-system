@@ -219,6 +219,16 @@
         .scrollbar-style::-webkit-scrollbar-thumb:hover {
             background: #6B8E23;
         }
+.station-card.inactive {
+    border-right: 5px solid #ff0000;
+    background: #fff5f5;
+    opacity: 0.7;
+}
+
+.station-card.inactive .station-header {
+    border-bottom: 2px solid #ff0000;
+}
+
     </style>
 </head>
 <body>
@@ -256,6 +266,9 @@
                     const currentDisplay = station.current_number 
                         ? `<div class="current-number">${station.current_number}</div>`
                         : '<div class="current-empty">אין בשירות</div>';
+                        // בדוק אם העמדה פעילה
+const statusClass = station.is_active ? '' : 'inactive';
+const statusText = station.is_active ? '' : '🔴 בהפסקה';
               
 
 const waitingDisplay = station.waiting_list && station.waiting_list.length > 0
@@ -266,8 +279,11 @@ const waitingDisplay = station.waiting_list && station.waiting_list.length > 0
                         : '<div class="waiting-empty">אין בתור</div>';
 
                     return `
-                        <div class="station-card">
-                            <div class="station-header">
+                
+                                <div class="station-card ${statusClass}">
+    <div class="station-header">
+        ${statusText ? `<div style="color: red; font-weight: bold; margin-bottom: 10px;">${statusText}</div>` : ''}
+
                                 <h2>${station.name}</h2>
                                 <p>${station.description}</p>
                             </div>

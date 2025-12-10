@@ -367,6 +367,100 @@
         .refresh-btn:hover {
             background: #6B8E23;
         }
+        .modal-insert {
+    display: none;
+    position: fixed;
+    z-index: 1100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-insert.active {
+    display: flex;
+}
+
+.insert-content {
+    background: white;
+    padding: 35px;
+    border-radius: 15px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.insert-form {
+    display: grid;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #556B2F;
+}
+
+.insert-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-insert {
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.btn-insert-submit {
+    background: #4a7c59;
+    color: white;
+    grid-column: 1 / -1;
+}
+
+.btn-insert-submit:hover {
+    background: #2d5f3f;
+}
+
+.btn-insert-cancel {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #e0e0e0;
+    grid-column: 1 / -1;
+}
+
+.btn-insert-cancel:hover {
+    background: #e0e0e0;
+}
     </style>
 </head>
 <body>
@@ -403,8 +497,11 @@
         <!-- טאב רשומות -->
         <div id="entries" class="tab-content active">
             <h2>ניהול רשומות</h2>
+             <div style="margin-bottom: 15px; display: flex; gap: 10px;">
             <button class="refresh-btn" onclick="loadEntries()">🔄 רענן</button>
-            <div class="table-responsive">
+             <button class="refresh-btn" style="background: #4a7c59;" onclick="openInsertModal()">➕ הוסף לקוח לתור</button>
+            </div>
+             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -559,7 +656,8 @@
                             <td>
                                 <button class="btn-small" onclick="openEditModal(${entry.id}, ${entry.customer_number}, '${entry.status}')">ערוך</button>
                                 <button class="btn-small delete" onclick="deleteEntry(${entry.id})">מחק</button>
-                            </td>
+                            <button class="btn-small" style="background: #FF8C00;" onclick="openTransferModal(${entry.customer_number}, ${entry.station_id})">📍 העבר</button>
+                                </td>
                         </tr>
                     `;
                 }).join('');
@@ -694,6 +792,207 @@
                 loadReport();
             }
         }, 5000);
+
+        // Load stations for insert modal
+async function loadStationsForInsert() {
+    try {
+        const response = await fetch('/api/center-data');
+        const stations = await response.json();
+        
+        const select = document.getElementById('insertStation');
+        select.innerHTML = stations.map(s => 
+            `<option value="${s.id}">${s.name}</option>`
+        ).join('');
+    } catch (error) {
+        console.error('Error loading stations:', error);
+    }
+}
+
+function openInsertModal() {
+    loadStationsForInsert();
+    document.getElementById('insertModal').classList.add('active');
+}
+
+function closeInsertModal() {
+    document.getElementById('insertModal').classList.remove('active');
+}
+
+async function confirmInsertCustomer() {
+    const stationId = document.getElementById('insertStation').value;
+    const customerNumber = document.getElementById('insertCustomerNumber').value;
+    const position = document.getElementById('insertPosition').value;
+    
+    if (!stationId || !customerNumber || !position) {
+        alert('⚠️ מלא את כל השדות');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/insert-customer-at-position', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                station_id: parseInt(stationId),
+                customer_number: parseInt(customerNumber),
+                position: parseInt(position)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`✅ ${data.message}`);
+            closeInsertModal();
+            loadEntries(); // רענן את הרשימה
+            
+            // נקה את הinputs
+            document.getElementById('insertCustomerNumber').value = '';
+            document.getElementById('insertPosition').value = '1';
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ שגיאה בהוספה');
+    }
+}
+
+// סגור modal בלחיצה על רקע
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('insertModal');
+    if (e.target === modal) {
+        closeInsertModal();
+    }
+});
+// Transfer Modal Functions
+function openTransferModal(customerNumber, stationId) {
+    loadStationsForTransfer();
+    document.getElementById('transferCustomerNumber').value = customerNumber;
+    document.getElementById('transferOldStationId').value = stationId;
+    document.getElementById('transferModal').classList.add('active');
+}
+
+function closeTransferModal() {
+    document.getElementById('transferModal').classList.remove('active');
+}
+
+async function loadStationsForTransfer() {
+    try {
+        const response = await fetch('/api/center-data');
+        const stations = await response.json();
+        
+        const select = document.getElementById('transferStation');
+        select.innerHTML = stations.map(s => 
+            `<option value="${s.id}">${s.name}</option>`
+        ).join('');
+    } catch (error) {
+        console.error('Error loading stations:', error);
+    }
+}
+
+async function confirmTransfer() {
+    const customerNumber = parseInt(document.getElementById('transferCustomerNumber').value);
+    const stationId = parseInt(document.getElementById('transferStation').value);
+    const position = parseInt(document.getElementById('transferPosition').value);
+    
+    if (!stationId || !position) {
+        alert('⚠️ מלא את כל השדות');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/insert-customer-at-position', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                station_id: stationId,
+                customer_number: customerNumber,
+                position: position
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`✅ ${data.message}`);
+            closeTransferModal();
+            loadEntries(); // רענן את הרשימה
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ שגיאה בהעברה');
+    }
+}
+
+// סגור modal בלחיצה על רקע
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('transferModal');
+    if (e.target === modal) {
+        closeTransferModal();
+    }
+});
+
     </script>
+
+<!-- Insert Customer Modal -->
+
+<div id="insertModal" class="modal-insert">
+    <div class="insert-content">
+        <h2 style="text-align: center; margin-bottom: 25px; color: #2d3436;">➕ הוסף לקוח לתור</h2>
+        
+        <div class="insert-form">
+            <div class="form-group">
+                <label>בחר תחנה:</label>
+                <select id="insertStation">
+                    <option value="">טוען תחנות...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>מס' סידורי:</label>
+                <input type="number" id="insertCustomerNumber" placeholder="הקלד מס' סידורי" min="1">
+            </div>
+            
+            <div class="form-group">
+                <label>מיקום בתור (1 = הראשון):</label>
+                <input type="number" id="insertPosition" placeholder="מיקום" min="1" value="1">
+            </div>
+            
+            <div class="insert-buttons">
+                <button class="btn-insert btn-insert-submit" onclick="confirmInsertCustomer()">✅ הוסף</button>
+                <button class="btn-insert btn-insert-cancel" onclick="closeInsertModal()">❌ ביטול</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Transfer Customer Modal -->
+<div id="transferModal" class="modal">
+    <div class="modal-content">
+        <h2>📍 העבר לקוח לתור</h2>
+        
+        <input type="hidden" id="transferCustomerNumber">
+        <input type="hidden" id="transferOldStationId">
+        
+        <label>בחר תחנה:</label>
+        <select id="transferStation">
+            <option value="">טוען תחנות...</option>
+        </select>
+        
+        <label style="margin-top: 15px;">מיקום בתור (1 = הראשון):</label>
+        <input type="number" id="transferPosition" placeholder="מיקום" min="1" value="1">
+        
+        <div class="modal-buttons">
+            <button class="btn-save" onclick="confirmTransfer()">✅ העבר</button>
+            <button class="btn-cancel" onclick="closeTransferModal()">❌ ביטול</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

@@ -1,67 +1,43 @@
 {
-  "admin_password": "admin123",
   "stations": [
     {
       "id": 1,
-      "name": "תחנה חידות",
-      "description": "פתור חידות ופאזלים"
+      "name": "באולינג 1",
+      "description": "זירת באולינג 1",
+      "queue_group_id": "bowling"
     },
     {
       "id": 2,
-      "name": "תחנה קיזוז",
-      "description": "משחק קיזוז"
+      "name": "באולינג 2",
+      "description": "זירת באולינג 2",
+      "queue_group_id": "bowling"
     },
     {
       "id": 3,
-      "name": "תחנה בדיקה ראייה",
-      "description": "בדיקת ראייה משעשעת"
-    },
-    {
-      "id": 4,
-      "name": "תחנה תיאטרון",
-      "description": "מופע תיאטרון"
-    },
-    {
-      "id": 5,
-      "name": "תחנה ריקוד",
-      "description": "שיעור ריקוד"
-    },
-    {
-      "id": 6,
-      "name": "תחנה אמן",
-      "description": "יצירה אמנותית"
-    },
-    {
-      "id": 7,
-      "name": "תחנה מוזיקה",
-      "description": "ביצוע מוזיקלי"
-    },
-    {
-      "id": 8,
-      "name": "תחנה ספורט",
-      "description": "משחקי ספורט"
-    },
-    {
-      "id": 9,
-      "name": "תחנה כושר",
-      "description": "תרגילי כושר"
-    },
-    {
-      "id": 10,
-      "name": "תחנה משחקים",
-      "description": "משחקים אינטראקטיביים"
+      "name": "פינג פונג",
+      "description": "זירת פינג פונג",
+      "queue_group_id": null
     }
   ],
   "operators": [
-    {"id": 1, "code": "1001", "station_id": 1, "name": "דוד"},
-    {"id": 2, "code": "1002", "station_id": 2, "name": "מירי"},
-    {"id": 3, "code": "1003", "station_id": 3, "name": "אלי"},
-    {"id": 4, "code": "1004", "station_id": 4, "name": "שרה"},
-    {"id": 5, "code": "1005", "station_id": 5, "name": "יוסי"},
-    {"id": 6, "code": "1006", "station_id": 6, "name": "רונית"},
-    {"id": 7, "code": "1007", "station_id": 7, "name": "אבי"},
-    {"id": 8, "code": "1008", "station_id": 8, "name": "נעמה"},
-    {"id": 9, "code": "1009", "station_id": 9, "name": "מוטי"},
-    {"id": 10, "code": "1010", "station_id": 10, "name": "רנה"}
-  ]
+    {
+      "id": 1,
+      "code": "1001",
+      "station_id": 1,
+      "name": "Operator 1"
+    },
+    {
+      "id": 2,
+      "code": "2002",
+      "station_id": 2,
+      "name": "Operator 2"
+    },
+    {
+      "id": 3,
+      "code": "3003",
+      "station_id": 3,
+      "name": "Operator 3"
+    }
+  ],
+  "admin_password": "admin123"
 }

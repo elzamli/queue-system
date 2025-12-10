@@ -366,9 +366,44 @@
                 padding: 25px;
             }
         }
+.btn-toggle {
+    background: #4a7c59;
+    color: white;
+}
+
+.btn-toggle:hover:not(:disabled) {
+    background: #2d5f3f;
+    transform: translateY(-2px);
+}
+
+.btn-toggle:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-toggle.inactive {
+    background: #FF8C00;
+    color: white;
+}
+
+.btn-toggle.inactive:hover:not(:disabled) {
+    background: #FF7000;
+    transform: translateY(-2px);
+}
+
     </style>
 </head>
 <body>
+
+<script>
+    // חלץ station_id מה-URL
+    // http://localhost:5000/operator/2 → STATION_ID = 2
+    const STATION_ID = parseInt(window.location.pathname.split('/').pop());
+    
+    console.log('Station ID:', STATION_ID);
+</script>
+
+    
     <div class="container">
         <div class="header">
             <h1>🎮 יום כיף - עובד בתחנה</h1>
@@ -392,17 +427,21 @@
                 מספר במתינה: <strong id="waitingCount">0</strong>
             </div>
 
+            
             <div class="buttons-group">
-                <button class="btn-primary" id="callNextBtn" onclick="callNext()">
-                    📢 קרא הבא
-                </button>
-                <button class="btn-secondary" onclick="openTransferModal()">
-                    ↔️ העברה לתור אחר
-                </button>
-                <button class="btn-release" onclick="finishCustomer()">
-                    🔓 העברה לשחרור
-                </button>
-            </div>
+    <button class="btn-primary" id="callNextBtn" onclick="callNext()">
+        📢 קרא הבא
+    </button>
+    <button class="btn-secondary" onclick="openTransferModal()">
+        ↔️ העברה לתור אחר
+    </button>
+    <button class="btn-release" onclick="finishCustomer()">
+        ✅ סיום ליום
+    </button>
+    <button class="btn-toggle" id="toggleBtn" onclick="toggleStationStatus()">
+        🟢 עמדה פעילה
+    </button>
+</div>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
@@ -454,11 +493,19 @@
         }
 
         // קבל את ה-stationId מה-path
-        function getStationId() {
-            const path = window.location.pathname;
-            const match = path.match(/\/operator(?:\/(\d+))?/);
-            return match ? (match[1] || 1) : 1;
-        }
+function getStationId() {
+    const path = window.location.pathname;
+    const parts = path.split('/');
+    const stationId = parts[parts.length - 1];
+    console.log('Extracted station ID from path:', stationId);
+    return parseInt(stationId) || 1;
+}
+
+
+
+
+
+
 
         // טוען נתונים בהתחלה
         async function init() {
@@ -718,7 +765,7 @@ function showLoginScreen() {
     `;
 }
 
-function loginOperator() {
+async function loginOperator() {
     const code = document.getElementById('operatorCode').value;
     
     if (!code) {
@@ -732,9 +779,30 @@ function loginOperator() {
         return;
     }
     
-    // עבור להעמדה עם הקוד בURL
-    window.location.href = `/operator?code=${code}`;
+    try {
+        const response = await fetch('/api/get-operator-station', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operator_code: code })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // הפנה ל-/operator/{station_id} עם הקוד בURL
+            window.location.href = `/operator/${data.station_id}?code=${code}`;
+        } else {
+            showLoginError('❌ קוד עובד לא תקין!');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showLoginError('❌ שגיאה בהזדהות');
+    }
 }
+
+
+
+
 
 function showLoginError(message) {
     const messageDiv = document.getElementById('loginMessage');
@@ -748,6 +816,98 @@ document.addEventListener('keypress', (e) => {
         loginOperator();
     }
 });
+async function toggleStationStatus() {
+    if (!operatorCode) {
+        showMessage('❌ Operator code not found', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('toggleBtn');
+    const originalText = btn.textContent;
+    
+    // הצג loading state
+    btn.disabled = true;
+    btn.textContent = '⏳ Loading...';
+    document.getElementById('loading').style.display = 'block';
+
+    try {
+        const response = await fetch(`/api/toggle-station-status/${stationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                operator_code: operatorCode
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // עדכן את הכפתור מיידית
+            updateToggleButton(data.is_active);
+            
+            showMessage(`✅ ${data.message}`, 'success');
+            await updateDisplay();
+        } else {
+            showMessage(`❌ ${data.error}`, 'error');
+            btn.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ Error changing status', 'error');
+        btn.textContent = originalText;
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+        btn.disabled = false;
+    }
+}
+
+function updateToggleButton(isActive) {
+    const btn = document.getElementById('toggleBtn');
+    if (isActive) {
+        btn.textContent = '🟢 Station Active';
+        btn.classList.remove('inactive');
+        btn.style.background = '#4a7c59';
+    } else {
+        btn.textContent = '🔴 Station Inactive';
+        btn.classList.add('inactive');
+        btn.style.background = '#FF8C00';
+    }
+}
+
+
+const code = getOperatorCode();
+const stId = getStationId();
+
+console.log('Page loaded - Station ID:', stId, 'Operator Code:', code);
+
+if (!code) {
+    console.log('No operator code found, showing login screen');
+    showLoginScreen();
+} else {
+    console.log('Operator code found, initializing station screen');
+    init();
+}
+
+
+
+
+
+
+function updateToggleButton(isActive) {
+    const btn = document.getElementById('toggleBtn');
+    if (isActive) {
+        btn.textContent = '🟢 עמדה פעילה';
+        btn.classList.remove('inactive');
+    } else {
+        btn.textContent = '🔴 עמדה לא פעילה';
+        btn.classList.add('inactive');
+    }
+}
+
+// בעדכון Display, אחרי שטוען את הנתונים, הוסף:
+// updateToggleButton(station.is_active);
     </script>
 </body>
 </html>
