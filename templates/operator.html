@@ -638,49 +638,59 @@ async function callNext() {
         }
 
         // אישור העברה
-        async function confirmTransfer() {
-            if (!currentCustomer) {
-                showMessage('❌ אין לקוח בשירות', 'error');
-                return;
-            }
+       
+       
+async function confirmTransfer() {
+    if (!currentCustomer) {
+        showMessage('❌ אין לקוח בשירות', 'error');
+        return;
+    }
 
-            const targetStationId = document.getElementById('transferStation').value;
-            if (!targetStationId) {
-                showMessage('❌ בחר תחנה', 'error');
-                return;
-            }
+    const targetStationId = document.getElementById('transferStation').value;
+    if (!targetStationId) {
+        showMessage('❌ בחר תחנה', 'error');
+        return;
+    }
 
-            document.getElementById('transferLoading').style.display = 'block';
+    document.getElementById('transferLoading').style.display = 'block';
 
-            try {
-                const response = await fetch('/api/add-entry', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        station_id: parseInt(targetStationId),
-                        customer_number: currentCustomer,
-                        transfer: true
-                    })
-                });
+    try {
+        const response = await fetch('/api/add-entry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                station_id: parseInt(targetStationId),
+                customer_number: currentCustomer,
+                transfer: true
+            })
+        });
 
-                const data = await response.json();
+        const data = await response.json();
 
-                if (response.ok) {
-                    showMessage(`✅ ${data.message}`, 'success');
-                    closeTransferModal();
-                    await updateDisplay();
-                } else {
-                    showMessage(`❌ ${data.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('❌ שגיאה בהעברה', 'error');
-            } finally {
-                document.getElementById('transferLoading').style.display = 'none';
-            }
+        if (response.ok) {
+            // סגור את המודל קודם
+            closeTransferModal();
+            
+            // הצג הודעת הצלחה
+            showMessage(`✅ לקוח ${currentCustomer} הועבר בהצלחה!`, 'success');
+            
+            // עדכן את התצוגה
+            await updateDisplay();
+        } else {
+            showMessage(`❌ ${data.error}`, 'error');
         }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ שגיאה בהעברה', 'error');
+    } finally {
+        document.getElementById('transferLoading').style.display = 'none';
+    }
+}
+
+
+
 
         // העברה לעמדת שחרור
         async function finishCustomer() {

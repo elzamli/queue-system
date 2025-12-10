@@ -186,10 +186,14 @@ def operator(station_id):
     """Operator screen"""
     log_action('VIEW ACCESSED', f'Operator screen - Station {station_id}')
     return render_template('operator.html', station_id=station_id)
+""""
+@app.route('/operator')
+def operator():
+   
+    log_action('VIEW ACCESSED', 'Operator screen')
+    return render_template('operator.html')
 
-
-
-
+"""
 @app.route('/finish')
 def finish():
     """Finish station screen"""
@@ -231,6 +235,7 @@ def center_data():
                 queue_station_id = station['id']
             
             # Get current customer
+            """"
             cursor.execute('''
                 SELECT customer_number FROM queue_entries 
                 WHERE station_id = ? AND status = 'called'
@@ -238,7 +243,19 @@ def center_data():
             ''', (queue_station_id,))
             current = cursor.fetchone()
             current_number = current['customer_number'] if current else None
-            
+            """
+             #Get current customer
+            # רק התחנה הראשונה בקבוצה רואה את ה-'called'
+            if station['id'] == queue_station_id:
+                cursor.execute('''
+                    SELECT customer_number FROM queue_entries 
+                    WHERE station_id = ? AND status = 'called'
+                    LIMIT 1
+                ''', (queue_station_id,))
+                current = cursor.fetchone()
+                current_number = current['customer_number'] if current else None
+            else:
+                current_number = None  # תחנות אחרות בקבוצה - לא רואות 'called'
             # Get waiting customers
             cursor.execute('''
                 SELECT customer_number FROM queue_entries 
@@ -264,6 +281,41 @@ def center_data():
     except Exception as e:
         log_action('API ERROR', f'center_data: {str(e)}', 'ERROR')
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/get-operator-station', methods=['POST'])
+def get_operator_station():
+    """Get station_id for operator code"""
+    data = request.json
+    operator_code = data.get('operator_code')
+    
+    if not operator_code:
+        return jsonify({'error': 'Operator code missing'}), 400
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT station_id FROM operators WHERE code = ?', (operator_code,))
+        operator = cursor.fetchone()
+        
+        conn.close()
+        
+        if not operator:
+            log_action('GET OPERATOR STATION ERROR', f'Operator {operator_code} not found', 'WARNING')
+            return jsonify({'error': 'Operator not found'}), 404
+        
+        log_action('GET OPERATOR STATION', f'Operator {operator_code} → Station {operator["station_id"]}')
+        
+        return jsonify({
+            'success': True,
+            'station_id': operator['station_id']
+        })
+    except Exception as e:
+        log_action('GET OPERATOR STATION ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
+
 
 @app.route('/api/stations-list')
 def stations_list():
@@ -308,45 +360,6 @@ def stations_list():
     except Exception as e:
         log_action('API ERROR', f'stations_list: {str(e)}', 'ERROR')
         return jsonify({'error': str(e)}), 500
-
-@app.route('/api/get-operator-station', methods=['POST'])
-def get_operator_station():
-    """Get station_id for operator code"""
-    data = request.json
-    operator_code = data.get('operator_code')
-    
-    if not operator_code:
-        return jsonify({'error': 'Operator code missing'}), 400
-    
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT station_id FROM operators WHERE code = ?', (operator_code,))
-        operator = cursor.fetchone()
-        
-        conn.close()
-        
-        if not operator:
-            log_action('GET OPERATOR STATION ERROR', f'Operator {operator_code} not found', 'WARNING')
-            return jsonify({'error': 'Operator not found'}), 404
-        
-        log_action('GET OPERATOR STATION', f'Operator {operator_code} → Station {operator["station_id"]}')
-        
-        return jsonify({
-            'success': True,
-            'station_id': operator['station_id']
-        })
-    except Exception as e:
-        log_action('GET OPERATOR STATION ERROR', str(e), 'ERROR')
-        return jsonify({'error': str(e)}), 500
-
-
-
-
-
-
-
 
 @app.route('/api/add-entry', methods=['POST'])
 def add_entry():
@@ -899,7 +912,6 @@ def get_logs():
     except Exception as e:
         log_action('GET LOGS ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
-
 
 # =====================
 # INITIALIZATION
