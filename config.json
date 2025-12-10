@@ -3,89 +3,87 @@
     {
       "id": 1,
       "name": "טנא 1",
-      "description": "טנא  ",
+      "description": "טנא",
       "queue_group_id": "tana"
     },
     {
       "id": 2,
       "name": "טנא 2",
-      "description": "טנא  ",
+      "description": "טנא",
       "queue_group_id": "tana"
     },
     {
       "id": 3,
       "name": "אספקה",
-      "description": "  אספקה",
+      "description": "אספקה",
       "queue_group_id": null
-    }
-{
+    },
+    {
       "id": 4,
       "name": "רפואה 1",
-      "description": "רפואה  ",
+      "description": "רפואה",
       "queue_group_id": "refoa"
     },
     {
       "id": 5,
       "name": "רפואה 2",
-      "description": "רפואה  ",
+      "description": "רפואה",
       "queue_group_id": "refoa"
     },
     {
       "id": 6,
       "name": "משאן",
-      "description": "  משאן",
+      "description": "משאן",
       "queue_group_id": null
-    }
-{
+    },
+    {
       "id": 7,
-      "name": "מצ ",
-      "description": "מצ  ",
+      "name": "מצ",
+      "description": "מצ",
       "queue_group_id": null
     },
     {
       "id": 8,
       "name": "מנהלה 1",
-      "description": "מנהלה ",
+      "description": "מנהלה",
       "queue_group_id": "minhala"
     },
     {
       "id": 9,
       "name": "מנהלה 2",
-      "description": "  מנהלה",
+      "description": "מנהלה",
       "queue_group_id": "minhala"
-    }
-{
+    },
+    {
       "id": 10,
       "name": "אגם 1",
-      "description": "אגם  ",
+      "description": "אגם",
       "queue_group_id": "agam"
     },
     {
       "id": 11,
       "name": "אגם 2",
-      "description": "אגם  ",
+      "description": "אגם",
       "queue_group_id": "agam"
     },
     {
       "id": 12,
       "name": "מודיעין 1",
-      "description": "  מודיעין",
+      "description": "מודיעין",
       "queue_group_id": "modin"
-    }
-{
+    },
+    {
       "id": 13,
       "name": "מודיעין 2",
-      "description": "מודיעין  ",
+      "description": "מודיעין",
       "queue_group_id": "modin"
     },
     {
       "id": 14,
-    "name": "מודיעין 3",
-      "description": "מודיעין  ",
+      "name": "מודיעין 3",
+      "description": "מודיעין",
       "queue_group_id": "modin"
     }
-   
-
   ],
   "operators": [
     {
@@ -105,75 +103,73 @@
       "code": "3003",
       "station_id": 3,
       "name": "Operator 3"
-    }
- {
+    },
+    {
       "id": 4,
-      "code": "1001",
+      "code": "4004",
       "station_id": 4,
-      "name": "Operator 1"
+      "name": "Operator 4"
     },
     {
       "id": 5,
-      "code": "2002",
-      "station_id": 25,
-      "name": "Operator 2"
+      "code": "5005",
+      "station_id": 5,
+      "name": "Operator 5"
     },
     {
       "id": 6,
-      "code": "3003",
+      "code": "6006",
       "station_id": 6,
-      "name": "Operator 3"
-    }
- {
+      "name": "Operator 6"
+    },
+    {
       "id": 7,
-      "code": "1001",
+      "code": "7007",
       "station_id": 7,
-      "name": "Operator 1"
+      "name": "Operator 7"
     },
     {
       "id": 8,
-      "code": "2002",
+      "code": "8008",
       "station_id": 8,
-      "name": "Operator 2"
+      "name": "Operator 8"
     },
     {
       "id": 9,
-      "code": "3003",
+      "code": "9009",
       "station_id": 9,
-      "name": "Operator 3"
-    }
- {
+      "name": "Operator 9"
+    },
+    {
       "id": 10,
-      "code": "1001",
+      "code": "10010",
       "station_id": 10,
-      "name": "Operator 1"
+      "name": "Operator 10"
     },
     {
       "id": 11,
-      "code": "2002",
+      "code": "11011",
       "station_id": 11,
-      "name": "Operator 2"
+      "name": "Operator 11"
     },
     {
       "id": 12,
-      "code": "3003",
+      "code": "12012",
       "station_id": 12,
-      "name": "Operator 3"
-    }
- {
+      "name": "Operator 12"
+    },
+    {
       "id": 13,
-      "code": "1001",
+      "code": "13013",
       "station_id": 13,
-      "name": "Operator 1"
+      "name": "Operator 13"
     },
     {
       "id": 14,
-      "code": "2002",
+      "code": "14014",
       "station_id": 14,
-      "name": "Operator 2"
-    },
-    
-
+      "name": "Operator 14"
+    }
   ],
   "admin_password": "admin123"
 }
