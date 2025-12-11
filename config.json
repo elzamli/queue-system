@@ -4,85 +4,106 @@
       "id": 1,
       "name": "טנא 1",
       "description": "טנא",
-      "queue_group_id": "tana"
+      "queue_group_id": "tana",
+      "hidden": 0
     },
     {
       "id": 2,
       "name": "טנא 2",
       "description": "טנא",
-      "queue_group_id": "tana"
+      "queue_group_id": "tana",
+      "hidden": 0
     },
     {
       "id": 3,
       "name": "אספקה",
       "description": "אספקה",
-      "queue_group_id": null
+      "queue_group_id": null,
+      "hidden": 0
     },
     {
       "id": 4,
       "name": "רפואה 1",
       "description": "רפואה",
-      "queue_group_id": "refoa"
+      "queue_group_id": "refoa",
+      "hidden": 0
     },
     {
       "id": 5,
       "name": "רפואה 2",
       "description": "רפואה",
-      "queue_group_id": "refoa"
+      "queue_group_id": "refoa",
+      "hidden": 0
     },
     {
       "id": 6,
       "name": "משאן",
       "description": "משאן",
-      "queue_group_id": null
+      "queue_group_id": null,
+      "hidden": 0
     },
     {
       "id": 7,
       "name": "מצ",
       "description": "מצ",
-      "queue_group_id": null
+      "queue_group_id": null,
+      "hidden": 0
     },
     {
       "id": 8,
       "name": "מנהלה 1",
       "description": "מנהלה",
-      "queue_group_id": "minhala"
+      "queue_group_id": "minhala",
+      "hidden": 0
     },
     {
       "id": 9,
       "name": "מנהלה 2",
       "description": "מנהלה",
-      "queue_group_id": "minhala"
+      "queue_group_id": "minhala",
+      "hidden": 0
     },
     {
       "id": 10,
       "name": "אגם 1",
       "description": "אגם",
-      "queue_group_id": "agam"
+      "queue_group_id": "agam",
+      "hidden": 0
     },
     {
       "id": 11,
       "name": "אגם 2",
       "description": "אגם",
-      "queue_group_id": "agam"
+      "queue_group_id": "agam",
+      "hidden": 0
     },
     {
       "id": 12,
       "name": "מודיעין 1",
       "description": "מודיעין",
-      "queue_group_id": "modin"
+      "queue_group_id": "modin",
+      "hidden": 0
     },
     {
       "id": 13,
       "name": "מודיעין 2",
       "description": "מודיעין",
-      "queue_group_id": "modin"
+      "queue_group_id": "modin",
+      "hidden": 0
     },
     {
       "id": 14,
       "name": "מודיעין 3",
       "description": "מודיעין",
-      "queue_group_id": "modin"
+      "queue_group_id": "modin",
+      "hidden": 0
+    },
+    {
+      "id": 15,
+      "name": "פוקד",
+      "description": "פוקד - תור מיוחד",
+      "queue_group_id": null,
+      "hidden": 1
     }
   ],
   "operators": [
@@ -169,6 +190,12 @@
       "code": "14014",
       "station_id": 14,
       "name": "Operator 14"
+    },
+    {
+      "id": 15,
+      "code": "15015",
+      "station_id": 15,
+      "name": "Operator Poked"
     }
   ],
   "admin_password": "admin123"

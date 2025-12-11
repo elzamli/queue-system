@@ -92,7 +92,8 @@ def init_db():
                 current_number INTEGER DEFAULT 0,
                 queue_group_id TEXT DEFAULT NULL,
                 is_active INTEGER DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                hidden INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMPAMP
             )
         ''')
         
@@ -132,14 +133,23 @@ def init_db():
         if os.path.exists('config.json'):
             with open('config.json', 'r', encoding='utf-8') as f:
                 config = json.load(f)
-                
+                """
                 # Add stations
                 for station in config.get('stations', []):
                     cursor.execute('''
                         INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active)
                         VALUES (?, ?, ?, ?, ?, 1)
                     ''', (station['id'], station['name'], station['description'], 0, station.get('queue_group_id')))
-                
+                """
+                # Add stations
+                for station in config.get('stations', []):
+                    cursor.execute('''
+                        INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active, hidden)
+                        VALUES (?, ?, ?, ?, ?, 1, ?)
+                    ''', (station['id'], station['name'], station['description'], 0, station.get('queue_group_id'), station.get('hidden', 0)))
+
+
+
                 # Add operators
                 for operator in config.get('operators', []):
                     cursor.execute('''
@@ -216,7 +226,7 @@ def center_data():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM stations ORDER BY id')
+        cursor.execute('SELECT * FROM stations WHERE hidden = 0 ORDER BY id')
         stations = cursor.fetchall()
         
         result = []
@@ -323,7 +333,7 @@ def stations_list():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM stations ORDER BY id')
+        cursor.execute('SELECT * FROM stations WHERE hidden = 0 ORDER BY id')
         stations = cursor.fetchall()
         
         result = []
@@ -899,6 +909,93 @@ def admin_report():
     except Exception as e:
         log_action('ADMIN REPORT ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/search-customer', methods=['GET'])
+def search_customer():
+    """Search customer by number"""
+    customer_number = request.args.get('number')
+    
+    if not customer_number:
+        return jsonify({'error': 'Customer number required'}), 400
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT qe.*, s.name as station_name
+            FROM queue_entries qe
+            JOIN stations s ON qe.station_id = s.id
+            WHERE qe.customer_number = ?
+            ORDER BY qe.created_at DESC
+        ''', (customer_number,))
+        
+        entries = cursor.fetchall()
+        result = [dict(entry) for entry in entries]
+        
+        conn.close()
+        return jsonify(result)
+    except Exception as e:
+        log_action('SEARCH CUSTOMER ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/transfer-to-poked', methods=['POST'])
+def transfer_to_poked():
+    """Transfer customer to Poked queue"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    
+    if not customer_number:
+        return jsonify({'error': 'Customer number missing'}), 400
+    
+    with db_lock:
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            
+            # Get Poked station (id=15)
+            cursor.execute('SELECT id FROM stations WHERE name = "פוקד" LIMIT 1')
+            poked_station = cursor.fetchone()
+            
+            if not poked_station:
+                conn.close()
+                return jsonify({'error': 'Poked station not found'}), 404
+            
+            poked_station_id = poked_station['id']
+            
+            # Delete from other queues
+            cursor.execute('''
+                DELETE FROM queue_entries 
+                WHERE customer_number = ? AND status IN ('waiting', 'called')
+            ''', (customer_number,))
+            
+            # Add to Poked
+            cursor.execute('''
+                INSERT INTO queue_entries (station_id, customer_number, status)
+                VALUES (?, ?, 'waiting')
+            ''', (poked_station_id, customer_number))
+            
+            conn.commit()
+            log_action('CUSTOMER TRANSFERRED TO POKED', f'Customer {customer_number} transferred')
+            
+            return jsonify({
+                'success': True,
+                'message': f'Customer {customer_number} transferred to Poked'
+            }), 200
+        
+        except Exception as e:
+            conn.rollback()
+            log_action('TRANSFER TO POKED ERROR', str(e), 'ERROR')
+            return jsonify({'error': str(e)}), 500
+        finally:
+            conn.close()
+
+
+
+
+
+
+
 
 @app.route('/api/logs', methods=['GET'])
 def get_logs():
