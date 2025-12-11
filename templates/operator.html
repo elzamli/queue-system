@@ -595,8 +595,8 @@ async function callNext() {
     document.getElementById('callNextBtn').disabled = true;
 
     try {
-        const response = await fetch(`/api/call-next/${stationId}`, {
-            method: 'POST',
+        const response = await fetch(`/api/call-next/${STATION_ID}`, {
+                 method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -841,7 +841,7 @@ async function toggleStationStatus() {
     document.getElementById('loading').style.display = 'block';
 
     try {
-        const response = await fetch(`/api/toggle-station-status/${stationId}`, {
+        const response = await fetch(`/api/toggle-station-status/${STATION_ID}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

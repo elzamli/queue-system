@@ -245,19 +245,17 @@ def center_data():
                 queue_station_id = station['id']
             
             # Get current customer
-        
-
-
+            """"
             cursor.execute('''
                 SELECT customer_number FROM queue_entries 
                 WHERE station_id = ? AND status = 'called'
                 LIMIT 1
-            ''', (station['id'],))
+            ''', (queue_station_id,))
             current = cursor.fetchone()
             current_number = current['customer_number'] if current else None
-            
-            
             """
+             #Get current customer
+            # רק התחנה הראשונה בקבוצה רואה את ה-'called'
             if station['id'] == queue_station_id:
                 cursor.execute('''
                     SELECT customer_number FROM queue_entries 
@@ -268,7 +266,6 @@ def center_data():
                 current_number = current['customer_number'] if current else None
             else:
                 current_number = None  # תחנות אחרות בקבוצה - לא רואות 'called'
-            """
             # Get waiting customers
             cursor.execute('''
                 SELECT customer_number FROM queue_entries 
@@ -484,11 +481,10 @@ def add_entry():
         finally:
             conn.close()
 
-@app.route('/api/call-next/<int:station_id>', methods=['POST'])
-def call_next_customer(station_id):
-    """Call next customer from queue group"""
-    data = request.json
-    operator_code = data.get('operator_code')
+    @app.route('/api/call-next/<int:station_id>', methods=['POST'])
+    def call_next_customer(station_id):
+        data = request.json
+        operator_code = data.get('operator_code')
     
     if not operator_code:
         log_action('CALL NEXT ERROR', 'Operator code missing', 'WARNING')
@@ -525,10 +521,20 @@ def call_next_customer(station_id):
                 queue_station_id = first_station_row['id']
             else:
                 queue_station_id = station_id
-            """
+            
+            # Mark previous called customer as completed
+            cursor.execute('''
+                UPDATE queue_entries 
+                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+                WHERE station_id = ? AND status = 'called'
+            ''', (queue_station_id,))
+            
+            log_action('PREVIOUS CUSTOMER COMPLETED', f'Customer status updated to completed')
+            
+            # Get next customer from the group
             if station['queue_group_id']:
                 cursor.execute('''
-                    SELECT qe.id, qe.customer_number,qe.station_id
+                    SELECT qe.id, qe.customer_number
                     FROM queue_entries qe
                     WHERE qe.status = 'waiting'
                     AND qe.station_id IN (
@@ -544,112 +550,47 @@ def call_next_customer(station_id):
                     ORDER BY position ASC, created_at ASC
                     LIMIT 1
                 ''', (queue_station_id,))
-
+            
             entry = cursor.fetchone()
-
+            
             if not entry:
                 conn.close()
-                log_action('CALL NEXT', 'No customers waiting', 'WARNING')
+                log_action('CALL NEXT', f'No customers waiting', 'WARNING')
                 return jsonify({'error': 'No customers waiting'}), 404
-
-           # סגור את הקודם
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
-                WHERE station_id = ? AND status = 'called'
-            ''', (queue_station_id,))
-
-            # קרא לקוח
+            
+            # Call the customer
             cursor.execute('''
                 UPDATE queue_entries 
                 SET status = 'called', called_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (entry['id'],))
-
-            # מחק את הלקוח הקודם מקבוצות אחרות (לא רלוונטי כרגע)
+            
+            # Delete from other stations in queue group
             if station['queue_group_id']:
                 cursor.execute('''
                     DELETE FROM queue_entries 
                     WHERE customer_number = ? 
                     AND station_id != ? 
                     AND status = 'waiting'
-                ''', (entry['customer_number'], queue_station_id))
-
+                ''', (entry['customer_number'], entry['station_id']))
+                
+                log_action('CUSTOMER REMOVED FROM OTHER STATIONS', f'Customer {entry["customer_number"]} removed from other stations in group')
+            
             conn.commit()
             log_action('CUSTOMER CALLED', f'Customer {entry["customer_number"]} called')
-
+            
             return jsonify({
                 'success': True,
                 'customer_number': entry['customer_number'],
                 'message': f'Customer {entry["customer_number"]} called'
             }), 200
-"""
-            # בחר הבא מתור משותף
-            if station['queue_group_id']:
-                cursor.execute('''
-                    SELECT qe.id, qe.customer_number, qe.station_id
-                    FROM queue_entries qe
-                    WHERE qe.status = 'waiting'
-                    AND qe.station_id IN (
-                        SELECT id FROM stations WHERE queue_group_id = ?
-                    )
-                    ORDER BY qe.position ASC, qe.created_at ASC
-                    LIMIT 1
-                ''', (station['queue_group_id'],))
-            else:
-                cursor.execute('''
-                    SELECT id, customer_number, station_id FROM queue_entries 
-                    WHERE station_id = ? AND status = 'waiting'
-                    ORDER BY position ASC, created_at ASC
-                    LIMIT 1
-                ''', (queue_station_id,))
-
-            entry = cursor.fetchone()
-
-            if not entry:
-                conn.close()
-                log_action('CALL NEXT', 'No customers waiting', 'WARNING')
-                return jsonify({'error': 'No customers waiting'}), 404
-
-            # סגור את הקודם בתחנה הנוכחית
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
-                WHERE station_id = ? AND status = 'called'
-            ''', (station_id,))
-
-            # עדכן את הלקוח החדש - גם station_id וגם status
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET status = 'called', called_at = CURRENT_TIMESTAMP, station_id = ?
-                WHERE id = ?
-            ''', (station_id, entry['id']))
-
-            # מחק מתחנות אחרות בקבוצה (אם היה בעבר בתחנה אחרת)
-            if station['queue_group_id']:
-                cursor.execute('''
-                    DELETE FROM queue_entries 
-                    WHERE customer_number = ? 
-                    AND station_id != ? 
-                    AND status = 'waiting'
-                ''', (entry['customer_number'], station_id))
-
-            conn.commit()
-            log_action('CUSTOMER CALLED', f'Customer {entry["customer_number"]} called')
-
-            return jsonify({
-                'success': True,
-                'customer_number': entry['customer_number'],
-                'message': f'Customer {entry["customer_number"]} called'
-            }), 200
-
-
+        
         except Exception as e:
-                conn.rollback()
-                log_action('CALL NEXT ERROR', str(e), 'ERROR')
-                return jsonify({'error': f'Error: {str(e)}'}), 500
+            conn.rollback()
+            log_action('CALL NEXT ERROR', str(e), 'ERROR')
+            return jsonify({'error': f'Error: {str(e)}'}), 500
         finally:
-                conn.close()
+            conn.close()
 
 @app.route('/api/finish-customer', methods=['POST'])
 def finish_customer():
