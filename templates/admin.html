@@ -461,6 +461,27 @@
 .btn-insert-cancel:hover {
     background: #e0e0e0;
 }
+
+}
+
+.poked-transfer-btn {
+    padding: 5px 10px;
+    background: #3498DB;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.poked-transfer-btn:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+}
+
+
     </style>
 </head>
 <body>
@@ -518,6 +539,21 @@
                 </table>
             </div>
         </div>
+<!-- Search Section -->
+<div class="section">
+    <h3>🔍 חיפוש לקוח</h3>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <input type="number" id="searchCustomerNumber" placeholder="הקלד מספר סידורי" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; flex: 1;">
+        <button onclick="searchCustomer()" style="padding: 10px 20px; background: #4a7c59; color: white; border: none; border-radius: 5px; cursor: pointer;">🔎 חיפוש</button>
+    </div>
+    
+    <div id="searchResults" style="display: none; background: #f0f8ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-right: 3px solid #556B2F;">
+        <h4>תוצאות חיפוש:</h4>
+        <div id="searchResultsContent"></div>
+        <button onclick="clearSearch()" style="margin-top: 10px; padding: 8px 15px; background: #999; color: white; border: none; border-radius: 5px; cursor: pointer;">ניקוי</button>
+    </div>
+</div>
 
         <!-- טאב דוח -->
         <div id="report" class="tab-content">
@@ -657,7 +693,12 @@
                                 <button class="btn-small" onclick="openEditModal(${entry.id}, ${entry.customer_number}, '${entry.status}')">ערוך</button>
                                 <button class="btn-small delete" onclick="deleteEntry(${entry.id})">מחק</button>
                             <button class="btn-small" style="background: #FF8C00;" onclick="openTransferModal(${entry.customer_number}, ${entry.station_id})">📍 העבר</button>
-                                </td>
+                            <button class="poked-transfer-btn" 
+        onclick="transferEntryToPoked(${entry.customer_number})"
+        style="background: #3498DB; padding: 5px 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+     לפוקד
+</button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
@@ -727,6 +768,111 @@
                 alert('❌ שגיאה במחיקה');
             }
         }
+        async function searchCustomer() {
+    const customerNumber = document.getElementById('searchCustomerNumber').value;
+    
+    if (!customerNumber) {
+        alert('הקלד מספר סידורי');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/search-customer?number=${customerNumber}`);
+        const data = await response.json();
+        
+        if (data.length === 0) {
+            document.getElementById('searchResultsContent').innerHTML = '<p>לא נמצא לקוח</p>';
+        } else {
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<tr style="background: #556B2F; color: white;"><th style="padding: 10px; border: 1px solid #ccc;">מספר</th><th style="padding: 10px; border: 1px solid #ccc;">תחנה</th><th style="padding: 10px; border: 1px solid #ccc;">סטטוס</th><th style="padding: 10px; border: 1px solid #ccc;">זמן</th></tr>';
+            
+            data.forEach(entry => {
+                const createdAt = new Date(entry.created_at).toLocaleString('he-IL');
+                html += `<tr style="border: 1px solid #ccc;">
+                    <td style="padding: 10px; border: 1px solid #ccc;">${entry.customer_number}</td>
+                    <td style="padding: 10px; border: 1px solid #ccc;">${entry.station_name}</td>
+                    <td style="padding: 10px; border: 1px solid #ccc;">${entry.status}</td>
+                    <td style="padding: 10px; border: 1px solid #ccc;">${createdAt}</td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            document.getElementById('searchResultsContent').innerHTML = html;
+        }
+        
+        document.getElementById('searchResults').style.display = 'block';
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function clearSearch() {
+    document.getElementById('searchCustomerNumber').value = '';
+    document.getElementById('searchResults').style.display = 'none';
+}
+
+async function transferToPoked() {
+    const customerNumber = document.getElementById('transferCustomerNumber').value;
+    
+    if (!customerNumber) {
+        alert('הקלד מספר סידורי');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/transfer-to-poked', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ customer_number: parseInt(customerNumber) })
+        });
+        
+        const data = await response.json();
+        
+        const messageDiv = document.getElementById('transferMessage');
+        if (response.ok) {
+            messageDiv.style.background = '#d4edda';
+            messageDiv.style.color = '#155724';
+            messageDiv.innerHTML = `✅ ${data.message}`;
+        } else {
+            messageDiv.style.background = '#f8d7da';
+            messageDiv.style.color = '#721c24';
+            messageDiv.innerHTML = `❌ ${data.error}`;
+        }
+        
+        messageDiv.style.display = 'block';
+        document.getElementById('transferCustomerNumber').value = '';
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+async function transferEntryToPoked(customerNumber) {
+    if (!confirm(`האם אתה בטוח שאתה רוצה להעביר לקוח ${customerNumber} לפוקד?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/transfer-to-poked', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ customer_number: customerNumber })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`✅ ${data.message}`);
+            loadEntries(); // רענן את הטבלה
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+
+
 
         // ========== דוח ==========
         async function loadReport() {
