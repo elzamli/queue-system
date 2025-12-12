@@ -234,8 +234,9 @@ def center_data():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        
         cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
-
+    
         stations = cursor.fetchall()
         
         result = []
@@ -345,7 +346,22 @@ def stations_list():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        """
         cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
+        """
+        cursor.execute('''
+            SELECT s.* FROM stations s
+            WHERE s.hidden = 0 AND s.restricted = 0
+            AND (
+                s.queue_group_id IS NULL
+                OR s.id = (
+                    SELECT MIN(id) FROM stations 
+                    WHERE queue_group_id = s.queue_group_id
+                )
+            )
+            ORDER BY s.id
+        ''')
+
 
         stations = cursor.fetchall()
         
