@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עמדת סיום - יום כיף</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .station-info {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #008B8B;
+        }
+
+        .station-name {
+            font-size: 24px;
+            color: #2d3436;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .operator-name {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .display-section {
+            background: linear-gradient(135deg, #008B8B 0%, #20B2AA 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .display-label {
+            font-size: 16px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .current-number {
+            font-size: 80px;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .no-customer {
+            font-size: 20px;
+            opacity: 0.8;
+        }
+
+        .queue-info {
+            text-align: center;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 14px;
+            border-right: 3px solid #008B8B;
+        }
+
+        .finished-list {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .finished-list h3 {
+            color: #008B8B;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .finished-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-right: 3px solid #008B8B;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .finished-item:hover {
+            background: #e8f5f5;
+            transform: translateX(-5px);
+        }
+
+        .finished-item.selected {
+            background: #d4edda;
+            border-right-color: #008B8B;
+        }
+
+        .finished-item-number {
+            font-weight: bold;
+            color: #2d3436;
+            font-size: 18px;
+        }
+
+        .finished-item-station {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .buttons-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 14px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #008B8B;
+            color: white;
+            grid-column: 1 / -1;
+            font-size: 16px;
+            padding: 16px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #006666;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+            margin: 15px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #008B8B;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #008B8B;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .main-card {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .current-number {
+                font-size: 56px;
+            }
+
+            .buttons-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    const FINISH_STATION_ID = 999;
+    console.log('Finish station ID:', FINISH_STATION_ID);
+</script>
+
+    <div class="container">
+        <div class="header">
+            <h1>✅ יום כיף - עמדת סיום</h1>
+            <p id="stationDisplay">טוען...</p>
+        </div>
+
+        <div class="main-card">
+            <div class="station-info">
+                <div class="station-name">עמדת סיום וקבלה</div>
+                <div class="operator-name" id="operatorName">עובד</div>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <div class="display-section">
+                <div class="display-label">🔔 לקוח לאישור</div>
+                <div class="current-number" id="currentNumber">-</div>
+            </div>
+
+            <div class="queue-info" id="queueInfo">
+                בהמתנה להשלמה: <strong id="waitingCount">0</strong>
+            </div>
+
+            <div class="finished-list">
+                <h3>📋 לקוחות להשלמה:</h3>
+                <div id="finishedList"></div>
+            </div>
+
+            <div class="buttons-group">
+                <button class="btn-primary" id="releaseBtn" onclick="releaseCustomer()" disabled>
+                    ✅ אישור ושחרור
+                </button>
+                <button class="btn-secondary" onclick="refreshList()">
+                    🔄 רענן רשימה
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>משלח...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let operatorCode = null;
+        let selectedCustomer = null;
+
+        function getOperatorCode() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('code');
+        }
+
+        async function init() {
+            operatorCode = getOperatorCode();
+
+            if (!operatorCode) {
+                showLoginScreen();
+                return;
+            }
+
+            await loadFinishedCustomers();
+            setInterval(loadFinishedCustomers, 3000);
+        }
+
+        async function loadFinishedCustomers() {
+            try {
+                const response = await fetch('/api/finish-station/finished-list');
+                const customers = await response.json();
+
+                document.getElementById('waitingCount').textContent = customers.length;
+
+                const listDiv = document.getElementById('finishedList');
+                if (customers.length === 0) {
+                    listDiv.innerHTML = '<p style="color: #666; text-align: center;">אין לקוחות בהמתנה להשלמה</p>';
+                    return;
+                }
+
+                listDiv.innerHTML = customers.map(customer => `
+                    <div class="finished-item" onclick="selectCustomer(${customer.customer_number}, '${customer.station_name}')" id="item-${customer.customer_number}">
+                        <div>
+                            <div class="finished-item-number">${customer.customer_number}</div>
+                            <div class="finished-item-station">${customer.station_name}</div>
+                        </div>
+                        <div style="color: #666; font-size: 12px;">הושלם</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading finished customers:', error);
+            }
+        }
+
+        function selectCustomer(customerNumber, stationName) {
+            if (selectedCustomer) {
+                document.getElementById(`item-${selectedCustomer}`).classList.remove('selected');
+            }
+
+            selectedCustomer = customerNumber;
+            document.getElementById(`item-${selectedCustomer}`).classList.add('selected');
+            document.getElementById('currentNumber').textContent = customerNumber;
+            document.getElementById('releaseBtn').disabled = false;
+            document.getElementById('message').style.display = 'none';
+        }
+
+        async function releaseCustomer() {
+            if (!selectedCustomer) {
+                showMessage('⚠️ בחר לקוח קודם', 'error');
+                return;
+            }
+
+            if (!confirm(`האם אתה בטוח שאתה רוצה לשחרר את הלקוח ${selectedCustomer}?`)) {
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('releaseBtn').disabled = true;
+
+            try {
+                const response = await fetch('/api/finish-station/release-customer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        customer_number: selectedCustomer,
+                        operator_code: operatorCode
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    selectedCustomer = null;
+                    document.getElementById('currentNumber').innerHTML = '<span class="no-customer">-</span>';
+                    document.getElementById('releaseBtn').disabled = true;
+                    await loadFinishedCustomers();
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('❌ שגיאה בשחרור הלקוח', 'error');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('releaseBtn').disabled = !selectedCustomer;
+            }
+        }
+
+        function refreshList() {
+            loadFinishedCustomers();
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 4000);
+        }
+
+        function showLoginScreen() {
+            document.querySelector('.main-card').innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🔐</div>
+                    <h2 style="color: #2d3436; margin-bottom: 30px; font-size: 24px;">הזדהות עובד עמדת סיום</h2>
+                    
+                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 30px; border-right: 3px solid #008B8B; color: #333; font-size: 14px;">
+                        📌 הקלד את קוד העובד שלך כדי להתחיל
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 10px; text-align: right;">קוד עובד:</label>
+                        <input type="password" id="operatorCode" placeholder="הקלד קוד" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; text-align: center;" autofocus>
+                    </div>
+                    
+                    <button onclick="loginOperator()" style="width: 100%; padding: 14px; background: #008B8B; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                        🔓 כנס
+                    </button>
+                    
+                    <div id="loginMessage" style="margin-top: 20px;"></div>
+                </div>
+            `;
+        }
+
+        async function loginOperator() {
+            const code = document.getElementById('operatorCode').value;
+            
+            if (!code) {
+                showLoginError('⚠️ הקלד קוד עובד');
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(code)) {
+                showLoginError('❌ קוד חייב להיות 4 ספרות');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/finish-station/verify-operator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ operator_code: code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = `/finish?code=${code}`;
+                } else {
+                    showLoginError('❌ קוד עובד לא תקין!');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showLoginError('❌ שגיאה בהזדהות');
+            }
+        }
+
+        function showLoginError(message) {
+            const messageDiv = document.getElementById('loginMessage');
+            messageDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 12px; border-radius: 8px; border: 1px solid #f5c6cb;">${message}</div>`;
+        }
+
+        document.addEventListener('keypress', (e) => {
+            const input = document.getElementById('operatorCode');
+            if (input && e.key === 'Enter') {
+                loginOperator();
+            }
+        });
+
+        if (!getOperatorCode()) {
+            showLoginScreen();
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>

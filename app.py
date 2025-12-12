@@ -93,7 +93,8 @@ def init_db():
                 queue_group_id TEXT DEFAULT NULL,
                 is_active INTEGER DEFAULT 1,
                 hidden INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMPAMP
+                restricted INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         
@@ -109,6 +110,7 @@ def init_db():
                 called_at TIMESTAMP,
                 completed_at TIMESTAMP,
                 finished_at TIMESTAMP,
+                       released_at TIMESTAMP,
                 FOREIGN KEY (station_id) REFERENCES stations(id)
             )
         ''')
@@ -118,8 +120,9 @@ def init_db():
             CREATE TABLE operators (
                 id INTEGER PRIMARY KEY,
                 code TEXT NOT NULL UNIQUE,
-                station_id INTEGER NOT NULL,
+                station_id INTEGER DEFAULT NULL,
                 name TEXT NOT NULL,
+                       finish_operator INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (station_id) REFERENCES stations(id)
             )
@@ -144,19 +147,23 @@ def init_db():
                 # Add stations
                 for station in config.get('stations', []):
                     cursor.execute('''
-                        INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active, hidden)
-                        VALUES (?, ?, ?, ?, ?, 1, ?)
-                    ''', (station['id'], station['name'], station['description'], 0, station.get('queue_group_id'), station.get('hidden', 0)))
-
+                        INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active, hidden, restricted)
+                        VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+                    ''', (station['id'], station['name'], station['description'], 0, 
+                        station.get('queue_group_id'), station.get('hidden', 0), station.get('restricted', 0)))
 
 
                 # Add operators
                 for operator in config.get('operators', []):
                     cursor.execute('''
-                        INSERT INTO operators (id, code, station_id, name)
-                        VALUES (?, ?, ?, ?)
-                    ''', (operator['id'], operator['code'], operator['station_id'], operator['name']))
-            
+                        INSERT INTO operators (id, code, station_id, name, finish_operator)
+                        VALUES (?, ?, ?, ?, ?)
+                    ''', (operator['id'], operator['code'], 
+                        operator.get('station_id'), operator['name'], 
+                        operator.get('finish_operator', 0)))
+
+
+
             log_action('INIT DB', f'Added {len(config.get("stations", []))} stations and {len(config.get("operators", []))} operators')
         else:
             log_action('INIT DB', 'config.json not found!', 'WARNING')
@@ -205,10 +212,11 @@ def operator():
 
 """
 @app.route('/finish')
-def finish():
-    """Finish station screen"""
-    log_action('VIEW ACCESSED', 'Finish station')
-    return render_template('finish_station.html')
+def finish_station():
+    """Finish station page"""
+    log_action('VIEW ACCESSED', 'Finish screen')
+    return render_template('finish.html')
+
 
 @app.route('/admin')
 def admin():
@@ -226,7 +234,8 @@ def center_data():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM stations WHERE hidden = 0 ORDER BY id')
+        cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
+
         stations = cursor.fetchall()
         
         result = []
@@ -336,7 +345,8 @@ def stations_list():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM stations WHERE hidden = 0 ORDER BY id')
+        cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
+
         stations = cursor.fetchall()
         
         result = []
@@ -525,65 +535,7 @@ def call_next_customer(station_id):
                 queue_station_id = first_station_row['id']
             else:
                 queue_station_id = station_id
-            """
-            if station['queue_group_id']:
-                cursor.execute('''
-                    SELECT qe.id, qe.customer_number,qe.station_id
-                    FROM queue_entries qe
-                    WHERE qe.status = 'waiting'
-                    AND qe.station_id IN (
-                        SELECT id FROM stations WHERE queue_group_id = ?
-                    )
-                    ORDER BY qe.position ASC, qe.created_at ASC
-                    LIMIT 1
-                ''', (station['queue_group_id'],))
-            else:
-                cursor.execute('''
-                    SELECT id, customer_number FROM queue_entries 
-                    WHERE station_id = ? AND status = 'waiting'
-                    ORDER BY position ASC, created_at ASC
-                    LIMIT 1
-                ''', (queue_station_id,))
-
-            entry = cursor.fetchone()
-
-            if not entry:
-                conn.close()
-                log_action('CALL NEXT', 'No customers waiting', 'WARNING')
-                return jsonify({'error': 'No customers waiting'}), 404
-
-           # סגור את הקודם
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
-                WHERE station_id = ? AND status = 'called'
-            ''', (queue_station_id,))
-
-            # קרא לקוח
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET status = 'called', called_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ''', (entry['id'],))
-
-            # מחק את הלקוח הקודם מקבוצות אחרות (לא רלוונטי כרגע)
-            if station['queue_group_id']:
-                cursor.execute('''
-                    DELETE FROM queue_entries 
-                    WHERE customer_number = ? 
-                    AND station_id != ? 
-                    AND status = 'waiting'
-                ''', (entry['customer_number'], queue_station_id))
-
-            conn.commit()
-            log_action('CUSTOMER CALLED', f'Customer {entry["customer_number"]} called')
-
-            return jsonify({
-                'success': True,
-                'customer_number': entry['customer_number'],
-                'message': f'Customer {entry["customer_number"]} called'
-            }), 200
-"""
+            
             # בחר הבא מתור משותף
             if station['queue_group_id']:
                 cursor.execute('''
@@ -666,12 +618,21 @@ def finish_customer():
         try:
             cursor = conn.cursor()
             cursor.execute('BEGIN IMMEDIATE')
-            
+
+            cursor.execute('''
+                UPDATE queue_entries 
+                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+                WHERE customer_number = ? AND status = 'called'
+            ''', (customer_number,))
+
             cursor.execute('''
                 UPDATE queue_entries 
                 SET status = 'finished', finished_at = CURRENT_TIMESTAMP
-                WHERE customer_number = ? AND status IN ('waiting', 'called')
+                WHERE customer_number = ? AND status = 'completed'
             ''', (customer_number,))
+
+
+
             
             conn.commit()
             log_action('CUSTOMER FINISHED DAY', f'Customer {customer_number} finished')
@@ -1063,7 +1024,7 @@ def transfer_to_poked():
             # Add to Poked
             cursor.execute('''
                 INSERT INTO queue_entries (station_id, customer_number, status)
-                VALUES (?, ?, 'waiting')
+                VALUES (100, ?, 'waiting')
             ''', (poked_station_id, customer_number))
             
             conn.commit()
@@ -1081,6 +1042,99 @@ def transfer_to_poked():
         finally:
             conn.close()
 
+@app.route('/api/finish-station/verify-operator', methods=['POST'])
+def verify_finish_operator():
+    """Verify operator for finish station"""
+    data = request.json
+    operator_code = data.get('operator_code')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id FROM operators 
+            WHERE code = ? AND finish_operator = 1
+        ''', (operator_code,))
+        operator = cursor.fetchone()
+        conn.close()
+        
+        if operator:
+            log_action('FINISH LOGIN', f'Operator {operator_code} logged in')
+            return jsonify({'success': True})
+        else:
+            log_action('FINISH LOGIN FAILED', f'Invalid operator code {operator_code}', 'WARNING')
+            return jsonify({'success': False, 'error': 'Invalid operator code'}), 401
+    except Exception as e:
+        log_action('FINISH VERIFY ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/finish-station/finished-list', methods=['GET'])
+def get_finished_list():
+    """Get list of finished customers waiting for release"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT qe.customer_number, s.name as station_name, qe.finished_at
+            FROM queue_entries qe
+            JOIN stations s ON qe.station_id = s.id
+            WHERE qe.status = 'finished'
+            ORDER BY qe.finished_at ASC
+        ''')
+        entries = cursor.fetchall()
+        result = [dict(entry) for entry in entries]
+        conn.close()
+        return jsonify(result)
+    except Exception as e:
+        log_action('FINISH LIST ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/finish-station/release-customer', methods=['POST'])
+def release_customer():
+    """Release customer from FINISHED to RELEASED"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    operator_code = data.get('operator_code')
+    
+    if not customer_number or not operator_code:
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    try:
+        conn = get_db_connection()
+        with db_lock:
+            cursor = conn.cursor()
+            
+            cursor.execute('SELECT id FROM operators WHERE code = ?', (operator_code,))
+            if not cursor.fetchone():
+                conn.close()
+                return jsonify({'error': 'Operator not authorized'}), 401
+            
+            cursor.execute('''
+                UPDATE queue_entries 
+                SET status = 'released', released_at = CURRENT_TIMESTAMP
+                WHERE customer_number = ? AND status = 'finished'
+            ''', (customer_number,))
+            
+            if cursor.rowcount == 0:
+                conn.close()
+                return jsonify({'error': 'Customer not found or not in finished status'}), 404
+            
+            conn.commit()
+            log_action('CUSTOMER RELEASED', f'Customer {customer_number} released')
+            
+            return jsonify({
+                'success': True,
+                'message': f'הלקוח {customer_number} שוחרר בהצלחה!'
+            }), 200
+    
+    except Exception as e:
+        conn.rollback()
+        log_action('RELEASE CUSTOMER ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
 
 
 
