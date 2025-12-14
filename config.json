@@ -119,6 +119,182 @@
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 1
+    },
+    {
+      "id": 16,
+      "name": "תקשוב 1",
+      "description": "תקשוב",
+      "queue_group_id": "tikshuv",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 17,
+      "name": "תקשוב 2",
+      "description": "תקשוב",
+      "queue_group_id": "tikshuv",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 18,
+      "name": "תקשוב 3",
+      "description": "תקשוב",
+      "queue_group_id": "tikshuv",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 19,
+      "name": "תקשוב 4",
+      "description": "תקשוב",
+      "queue_group_id": "tikshuv",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 20,
+      "name": "אש 1",
+      "description": "אש",
+      "queue_group_id": "esh",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 21,
+      "name": "אש 2",
+      "description": "אש",
+      "queue_group_id": "esh",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 22,
+      "name": "אש 3",
+      "description": "אש",
+      "queue_group_id": "esh",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 23,
+      "name": "אש 4",
+      "description": "אש",
+      "queue_group_id": "esh",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 24,
+      "name": "990 1",
+      "description": "990",
+      "queue_group_id": "zy",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 25,
+      "name": "990 2",
+      "description": "990",
+      "queue_group_id": "zy",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 26,
+      "name": "990 3",
+      "description": "990",
+      "queue_group_id": "zy",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 27,
+      "name": "990 4",
+      "description": "990",
+      "queue_group_id": "zy",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 28,
+      "name": "96 1",
+      "description": "96",
+      "queue_group_id": "og",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 29,
+      "name": "96 2",
+      "description": "96",
+      "queue_group_id": "og",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 30,
+      "name": "96 3",
+      "description": "96",
+      "queue_group_id": "og",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 31,
+      "name": "96 4",
+      "description": "96",
+      "queue_group_id": "og",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 32,
+      "name": "אטל 1",
+      "description": "אטל",
+      "queue_group_id": "atal",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 33,
+      "name": "אטל 2",
+      "description": "אטל",
+      "queue_group_id": "atal",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 34,
+      "name": "רופא 1",
+      "description": "רופא",
+      "queue_group_id": "rofe",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 35,
+      "name": "רופא 2",
+      "description": "רופא",
+      "queue_group_id": "rofe",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 36,
+      "name": "רופא 3",
+      "description": "רופא",
+      "queue_group_id": "rofe",
+      "hidden": 0,
+      "restricted": 0
+    },
+    {
+      "id": 37,
+      "name": "רופא 4",
+      "description": "רופא",
+      "queue_group_id": "rofe",
+      "hidden": 0,
+      "restricted": 0
     }
   ],
   "operators": [
@@ -212,15 +388,145 @@
       "station_id": 15,
       "name": "Operator Poked"
     },
-  {
-  "id": 100,
-  "code": "9999",
-  "station_id": null,
-  "name": "עובד סיום",
-  "finish_operator": 1
-}
-
-
+    {
+      "id": 16,
+      "code": "16016",
+      "station_id": 16,
+      "name": "Operator 16"
+    },
+    {
+      "id": 17,
+      "code": "17017",
+      "station_id": 17,
+      "name": "Operator 17"
+    },
+    {
+      "id": 18,
+      "code": "18018",
+      "station_id": 18,
+      "name": "Operator 18"
+    },
+    {
+      "id": 19,
+      "code": "19019",
+      "station_id": 19,
+      "name": "Operator 19"
+    },
+    {
+      "id": 20,
+      "code": "20020",
+      "station_id": 20,
+      "name": "Operator 20"
+    },
+    {
+      "id": 21,
+      "code": "21021",
+      "station_id": 21,
+      "name": "Operator 21"
+    },
+    {
+      "id": 22,
+      "code": "22022",
+      "station_id": 22,
+      "name": "Operator 22"
+    },
+    {
+      "id": 23,
+      "code": "23023",
+      "station_id": 23,
+      "name": "Operator 23"
+    },
+    {
+      "id": 24,
+      "code": "24024",
+      "station_id": 24,
+      "name": "Operator 24"
+    },
+    {
+      "id": 25,
+      "code": "25025",
+      "station_id": 25,
+      "name": "Operator 25"
+    },
+    {
+      "id": 26,
+      "code": "26026",
+      "station_id": 26,
+      "name": "Operator 26"
+    },
+    {
+      "id": 27,
+      "code": "27027",
+      "station_id": 27,
+      "name": "Operator 27"
+    },
+    {
+      "id": 28,
+      "code": "28028",
+      "station_id": 28,
+      "name": "Operator 28"
+    },
+    {
+      "id": 29,
+      "code": "29029",
+      "station_id": 29,
+      "name": "Operator 29"
+    },
+    {
+      "id": 30,
+      "code": "30030",
+      "station_id": 30,
+      "name": "Operator 30"
+    },
+    {
+      "id": 31,
+      "code": "31031",
+      "station_id": 31,
+      "name": "Operator 31"
+    },
+    {
+      "id": 32,
+      "code": "32032",
+      "station_id": 32,
+      "name": "Operator 32"
+    },
+    {
+      "id": 33,
+      "code": "33033",
+      "station_id": 33,
+      "name": "Operator 33"
+    },
+    {
+      "id": 34,
+      "code": "34034",
+      "station_id": 34,
+      "name": "Operator 34"
+    },
+    {
+      "id": 35,
+      "code": "35035",
+      "station_id": 35,
+      "name": "Operator 35"
+    },
+    {
+      "id": 36,
+      "code": "36036",
+      "station_id": 36,
+      "name": "Operator 36"
+    },
+    {
+      "id": 37,
+      "code": "37037",
+      "station_id": 37,
+      "name": "Operator 37"
+    },
+    {
+      "id": 100,
+      "code": "9999",
+      "station_id": null,
+      "name": "עובד סיום",
+      "finish_operator": 1
+    }
   ],
   "admin_password": "admin123"
 }

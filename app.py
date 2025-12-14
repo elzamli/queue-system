@@ -58,6 +58,20 @@ def log_action(action, details='', level='INFO'):
     
     print(f"[{level}] {message}")
 
+
+def log_to_history(cursor, customer_number, station_id, station_name, status, action):
+    """Log action to history"""
+    try:
+        cursor.execute('''
+            INSERT INTO queue_entries_history 
+            (customer_number, station_id, station_name, status, action)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (customer_number, station_id, station_name, status, action))
+    except Exception as e:
+        # לא תקים את הtransaction אם logging נופל
+        log_action('HISTORY LOG ERROR', str(e), 'ERROR')
+
+
 def get_db_connection():
     """Get database connection"""
     conn = sqlite3.connect(DB_FILE)
@@ -127,6 +141,18 @@ def init_db():
                 FOREIGN KEY (station_id) REFERENCES stations(id)
             )
         ''')
+# Create queue entriees table
+        cursor.execute('''
+                        CREATE TABLE queue_entries_history (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            customer_number INTEGER NOT NULL,
+                            station_id INTEGER NOT NULL,
+                            station_name TEXT NOT NULL,
+                            status TEXT NOT NULL,
+                            action TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    ''')
         
         log_action('INIT DB', 'Tables created successfully')
         
@@ -161,6 +187,8 @@ def init_db():
                     ''', (operator['id'], operator['code'], 
                         operator.get('station_id'), operator['name'], 
                         operator.get('finish_operator', 0)))
+                    
+    
 
 
 
@@ -168,6 +196,8 @@ def init_db():
         else:
             log_action('INIT DB', 'config.json not found!', 'WARNING')
         
+                
+
         conn.commit()
         conn.close()
         log_action('INIT DB', 'Database ready!')
@@ -399,7 +429,7 @@ def stations_list():
     except Exception as e:
         log_action('API ERROR', f'stations_list: {str(e)}', 'ERROR')
         return jsonify({'error': str(e)}), 500
-
+    
 @app.route('/api/add-entry', methods=['POST'])
 def add_entry():
     """Add customer to queue - supports queue groups"""
@@ -407,6 +437,7 @@ def add_entry():
     station_id = data.get('station_id')
     customer_number = data.get('customer_number')
     transfer = data.get('transfer', False)
+    conn = None
     
     if not station_id or not customer_number:
         log_action('ADD ENTRY FAILED', 'Missing data', 'WARNING')
@@ -418,17 +449,15 @@ def add_entry():
         log_action('ADD ENTRY FAILED', 'Invalid number', 'WARNING')
         return jsonify({'error': 'Customer number must be a number'}), 400
     
-    with db_lock:
-        conn = get_db_connection()
-        try:
+    try:
+        with db_lock:
+            conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute('BEGIN IMMEDIATE')
             
             cursor.execute('SELECT id, name, queue_group_id FROM stations WHERE id = ?', (station_id,))
             station = cursor.fetchone()
             if not station:
-                conn.rollback()
-                conn.close()
                 log_action('ADD ENTRY FAILED', f'Station {station_id} not found', 'WARNING')
                 return jsonify({'error': 'Station not found'}), 404
             
@@ -451,8 +480,6 @@ def add_entry():
             ''', (queue_station_id, customer_number))
             
             if cursor.fetchone():
-                conn.rollback()
-                conn.close()
                 log_action('ADD ENTRY FAILED', f'Customer {customer_number} already in queue', 'WARNING')
                 return jsonify({'error': 'Customer already in queue'}), 400
             
@@ -471,8 +498,6 @@ def add_entry():
                 other_station = cursor.fetchone()
                 
                 if not transfer:
-                    conn.rollback()
-                    conn.close()
                     return jsonify({
                         'error': f'Customer {customer_number} is already in queue',
                         'conflict': True,
@@ -493,36 +518,45 @@ def add_entry():
                 INSERT INTO queue_entries (station_id, customer_number, status)
                 VALUES (?, ?, 'waiting')
             ''', (queue_station_id, customer_number))
-            
-            log_action('CUSTOMER ADDED', f'Customer {customer_number} to {station["name"]}')
-            
+           
+            # הוסף logging בחזרה
+            cursor.execute('SELECT name FROM stations WHERE id = ?', (queue_station_id,))
+            station_row = cursor.fetchone()
+            if station_row:
+                log_to_history(cursor, customer_number, queue_station_id, station_row['name'], 'waiting', 'added')
+
             conn.commit()
+            log_action('CUSTOMER ADDED', f'Customer {customer_number} to {station["name"]}')
             
             return jsonify({
                 'success': True,
                 'message': f'Customer {customer_number} added to queue'
             }), 201
-        
-        except Exception as e:
+    
+    except Exception as e:
+        if conn:
             conn.rollback()
-            log_action('ADD ENTRY ERROR', str(e), 'ERROR')
-            return jsonify({'error': f'Error: {str(e)}'}), 500
-        finally:
+        log_action('ADD ENTRY ERROR', str(e), 'ERROR')
+        return jsonify({'error': f'Error: {str(e)}'}), 500
+    finally:
+        if conn:
             conn.close()
+
 
 @app.route('/api/call-next/<int:station_id>', methods=['POST'])
 def call_next_customer(station_id):
     """Call next customer from queue group"""
     data = request.json
     operator_code = data.get('operator_code')
+    conn = None
     
     if not operator_code:
         log_action('CALL NEXT ERROR', 'Operator code missing', 'WARNING')
         return jsonify({'error': 'Operator code missing'}), 400
-    
-    with db_lock:
-        conn = get_db_connection()
-        try:
+
+    try:
+        with db_lock:
+            conn = get_db_connection()
             cursor = conn.cursor()
             
             cursor.execute('''
@@ -532,7 +566,6 @@ def call_next_customer(station_id):
             
             operator = cursor.fetchone()
             if not operator:
-                conn.close()
                 log_action('CALL NEXT ERROR', f'Operator {operator_code} not authorized', 'WARNING')
                 return jsonify({'error': 'Operator not assigned to this station'}), 401
             
@@ -575,7 +608,6 @@ def call_next_customer(station_id):
             entry = cursor.fetchone()
 
             if not entry:
-                conn.close()
                 log_action('CALL NEXT', 'No customers waiting', 'WARNING')
                 return jsonify({'error': 'No customers waiting'}), 404
 
@@ -592,7 +624,18 @@ def call_next_customer(station_id):
                 SET status = 'called', called_at = CURRENT_TIMESTAMP, station_id = ?
                 WHERE id = ?
             ''', (station_id, entry['id']))
+            
+            # אחרי UPDATE ל-called - הוסף logging
+            cursor.execute('SELECT name FROM stations WHERE id = ?', (station_id,))
+            station_row = cursor.fetchone()
 
+            if station_row:
+                station_name = station_row['name']
+            else:
+                station_name = f'Station {station_id}'
+
+            log_to_history(cursor, entry['customer_number'], station_id, station_name, 'called', 'called')
+            
             # מחק מתחנות אחרות בקבוצה (אם היה בעבר בתחנה אחרת)
             if station['queue_group_id']:
                 cursor.execute('''
@@ -611,44 +654,68 @@ def call_next_customer(station_id):
                 'message': f'Customer {entry["customer_number"]} called'
             }), 200
 
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        log_action('CALL NEXT ERROR', str(e), 'ERROR')
+        return jsonify({'error': f'Error: {str(e)}'}), 500
+    finally:
+        if conn:
+            conn.close()
 
-        except Exception as e:
-                conn.rollback()
-                log_action('CALL NEXT ERROR', str(e), 'ERROR')
-                return jsonify({'error': f'Error: {str(e)}'}), 500
-        finally:
-                conn.close()
 
 @app.route('/api/finish-customer', methods=['POST'])
 def finish_customer():
     """Finish customer for the day"""
     data = request.json
     customer_number = data.get('customer_number')
+    conn = None
     
     if not customer_number:
         log_action('FINISH CUSTOMER FAILED', 'Customer number missing', 'WARNING')
         return jsonify({'error': 'Customer number missing'}), 400
     
-    with db_lock:
-        conn = get_db_connection()
-        try:
+    try:
+        with db_lock:
+            conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute('BEGIN IMMEDIATE')
-
+            
+            # צריך להוציא את station_id של הלקוח קודם!
+            cursor.execute('''
+                SELECT station_id FROM queue_entries 
+                WHERE customer_number = ? AND status = 'called'
+                LIMIT 1
+            ''', (customer_number,))
+            
+            current = cursor.fetchone()
+            if not current:
+                return jsonify({'error': 'Customer not in service'}), 404
+            
+            customer_station_id = current['station_id']
+            
+            # UPDATE ל-completed
             cursor.execute('''
                 UPDATE queue_entries 
                 SET status = 'completed', completed_at = CURRENT_TIMESTAMP
                 WHERE customer_number = ? AND status = 'called'
             ''', (customer_number,))
-
+            
+            # הוסף logging
+            cursor.execute('SELECT name FROM stations WHERE id = ?', (customer_station_id,))
+            station = cursor.fetchone()
+            if station:
+                log_to_history(cursor, customer_number, customer_station_id, station['name'], 'completed', 'completed')
+            
+            # UPDATE ל-finished
             cursor.execute('''
                 UPDATE queue_entries 
                 SET status = 'finished', finished_at = CURRENT_TIMESTAMP
                 WHERE customer_number = ? AND status = 'completed'
             ''', (customer_number,))
-
-
-
+            
+            # הוסף logging
+            if station:
+                log_to_history(cursor, customer_number, customer_station_id, station['name'], 'finished', 'finished')
             
             conn.commit()
             log_action('CUSTOMER FINISHED DAY', f'Customer {customer_number} finished')
@@ -657,13 +724,16 @@ def finish_customer():
                 'success': True,
                 'message': f'Customer {customer_number} finished successfully!'
             }), 200
-        
-        except Exception as e:
+    
+    except Exception as e:
+        if conn:
             conn.rollback()
-            log_action('FINISH CUSTOMER ERROR', str(e), 'ERROR')
-            return jsonify({'error': f'Error: {str(e)}'}), 500
-        finally:
+        log_action('FINISH CUSTOMER ERROR', str(e), 'ERROR')
+        return jsonify({'error': f'Error: {str(e)}'}), 500
+    finally:
+        if conn:
             conn.close()
+
 
 @app.route('/api/toggle-station-status/<int:station_id>', methods=['POST'])
 def toggle_station_status(station_id):
@@ -863,33 +933,73 @@ def get_entries():
 
 @app.route('/api/admin/entries', methods=['PUT'])
 def update_entry():
-    """Update queue entry"""
     data = request.json
     entry_id = data.get('id')
-    customer_number = data.get('customer_number')
-    status = data.get('status')
     
-    with db_lock:
+    if not entry_id:
+        return jsonify({'error': 'Missing entry id'}), 400
+    
+    try:
         conn = get_db_connection()
-        try:
+        with db_lock:
             cursor = conn.cursor()
             
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET customer_number = ?, status = ?
-                WHERE id = ?
-            ''', (customer_number, status, entry_id))
+            cursor.execute('SELECT * FROM queue_entries WHERE id = ?', (entry_id,))
+            if not cursor.fetchone():
+                conn.close()
+                return jsonify({'error': 'Entry not found'}), 404
+            
+            # בנה UPDATE מה שיש בdata
+            customer_number = data.get('customer_number')
+            status = data.get('status')
+            station_id = data.get('station_id')
+            
+            # עדכן לפי מה שקיים
+            if customer_number and status:
+                cursor.execute('''
+                    UPDATE queue_entries 
+                    SET customer_number = ?, status = ?
+                    WHERE id = ?
+                ''', (customer_number, status, entry_id))
+            elif customer_number:
+                cursor.execute('''
+                    UPDATE queue_entries 
+                    SET customer_number = ?
+                    WHERE id = ?
+                ''', (customer_number, entry_id))
+            elif status:
+                cursor.execute('''
+                    UPDATE queue_entries 
+                    SET status = ?
+                    WHERE id = ?
+                ''', (status, entry_id))
+            elif station_id:
+                cursor.execute('''
+                    UPDATE queue_entries 
+                    SET station_id = ?
+                    WHERE id = ?
+                ''', (station_id, entry_id))
+            else:
+                conn.close()
+                return jsonify({'error': 'No fields to update'}), 400
             
             conn.commit()
-            log_action('ENTRY EDITED', f'Entry {entry_id} updated')
+            log_action('ADMIN ENTRY UPDATED', f'Entry {entry_id} updated')
             
-            return jsonify({'success': True})
-        except Exception as e:
-            conn.rollback()
-            log_action('UPDATE ENTRY ERROR', str(e), 'ERROR')
-            return jsonify({'error': str(e)}), 500
-        finally:
-            conn.close()
+            return jsonify({
+                'success': True,
+                'message': 'הרשומה עודכנה בהצלחה!'
+            }), 200
+    
+    except Exception as e:
+        conn.rollback()
+        log_action('ADMIN UPDATE ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+
 
 @app.route('/api/admin/entries', methods=['DELETE'])
 def delete_entry():
@@ -978,9 +1088,47 @@ def admin_report():
         log_action('ADMIN REPORT ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/search-customer', methods=['GET'])
 def search_customer():
-    """Search customer by number"""
+    customer_number = request.args.get('number')
+    
+    if not customer_number:
+        return jsonify({'error': 'Customer number required'}), 400
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT customer_number, station_id, station_name, status, action, created_at
+            FROM queue_entries_history
+            WHERE customer_number = ?
+            ORDER BY station_id, created_at DESC
+        ''', (customer_number,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # סנן רק אחרון בכל station
+        seen_stations = set()
+        result = []
+        for row in rows:
+            if row['station_id'] not in seen_stations:
+                result.append(dict(row))
+                seen_stations.add(row['station_id'])
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+"""
+@app.route('/api/search-customer', methods=['GET'])
+def search_customer():
+    Search customer by number
     customer_number = request.args.get('number')
     
     if not customer_number:
@@ -1009,20 +1157,19 @@ def search_customer():
 
 @app.route('/api/transfer-to-poked', methods=['POST'])
 def transfer_to_poked():
-    """Transfer customer to Poked queue"""
     data = request.json
     customer_number = data.get('customer_number')
     
     if not customer_number:
-        return jsonify({'error': 'Customer number missing'}), 400
+        return jsonify({'error': 'Missing customer number'}), 400
     
-    with db_lock:
+    try:
         conn = get_db_connection()
-        try:
+        with db_lock:
             cursor = conn.cursor()
             
-            # Get Poked station (id=15)
-            cursor.execute('SELECT id FROM stations WHERE name = "פוקד" LIMIT 1')
+            # Get Poked station
+            cursor.execute('SELECT id FROM stations WHERE name = ? LIMIT 1', ('פוקד',))
             poked_station = cursor.fetchone()
             
             if not poked_station:
@@ -1031,32 +1178,38 @@ def transfer_to_poked():
             
             poked_station_id = poked_station['id']
             
-            # Delete from other queues
+            # Delete from all queues
             cursor.execute('''
                 DELETE FROM queue_entries 
                 WHERE customer_number = ? AND status IN ('waiting', 'called')
-            ''', (customer_number,))
+            ''', (customer_number,))  # ← הוסף את ה-parameter!
             
-            # Add to Poked
+            # Add to Poked with WAITING status (not 'poked')
             cursor.execute('''
                 INSERT INTO queue_entries (station_id, customer_number, status)
-                VALUES (100, ?, 'waiting')
+                VALUES (?, ?, 'waiting')
             ''', (poked_station_id, customer_number))
             
+            # אחרי INSERT לפוקד
+            log_to_history(cursor, customer_number, poked_station_id, 'פוקד', 'waiting', 'transferred_to_poked')
+            
+
+            
             conn.commit()
-            log_action('CUSTOMER TRANSFERRED TO POKED', f'Customer {customer_number} transferred')
+            log_action('CUSTOMER TRANSFERRED TO POKED', f'Customer {customer_number}')
             
             return jsonify({
                 'success': True,
-                'message': f'Customer {customer_number} transferred to Poked'
+                'message': f'הלקוח {customer_number} הועבר לפוקד בהצלחה!'
             }), 200
-        
-        except Exception as e:
-            conn.rollback()
-            log_action('TRANSFER TO POKED ERROR', str(e), 'ERROR')
-            return jsonify({'error': str(e)}), 500
-        finally:
-            conn.close()
+    
+    except Exception as e:
+        conn.rollback()
+        log_action('TRANSFER TO POKED ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+"""
 
 @app.route('/api/finish-station/verify-operator', methods=['POST'])
 def verify_finish_operator():
@@ -1106,10 +1259,10 @@ def get_finished_list():
         log_action('FINISH LIST ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
-
+"""
 @app.route('/api/finish-station/release-customer', methods=['POST'])
 def release_customer():
-    """Release customer from FINISHED to RELEASED"""
+    
     data = request.json
     customer_number = data.get('customer_number')
     operator_code = data.get('operator_code')
@@ -1133,6 +1286,11 @@ def release_customer():
                 WHERE customer_number = ? AND status = 'finished'
             ''', (customer_number,))
             
+            # אחרי UPDATE ל-released
+            cursor.execute('SELECT name FROM stations WHERE id = ?', (station_id,))
+            station = cursor.fetchone()
+            log_to_history(cursor, customer_number, station_id, station['name'], 'released', 'released')
+            
             if cursor.rowcount == 0:
                 conn.close()
                 return jsonify({'error': 'Customer not found or not in finished status'}), 404
@@ -1151,8 +1309,69 @@ def release_customer():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
-
-
+"""
+@app.route('/api/finish-station/release-customer', methods=['POST'])
+def release_customer():
+    """Release customer from FINISHED to RELEASED"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    operator_code = data.get('operator_code')
+    conn = None
+    
+    if not customer_number or not operator_code:
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    try:
+        with db_lock:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('SELECT id FROM operators WHERE code = ?', (operator_code,))
+            if not cursor.fetchone():
+                return jsonify({'error': 'Operator not authorized'}), 401
+            
+            # צריך להוציא את station_id קודם!
+            cursor.execute('''
+                SELECT station_id FROM queue_entries 
+                WHERE customer_number = ? AND status = 'finished'
+                LIMIT 1
+            ''', (customer_number,))
+            
+            result = cursor.fetchone()
+            if not result:
+                return jsonify({'error': 'Customer not found or not in finished status'}), 404
+            
+            station_id = result['station_id']
+            
+            # עכשיו עדכן ל-released
+            cursor.execute('''
+                UPDATE queue_entries 
+                SET status = 'released', released_at = CURRENT_TIMESTAMP
+                WHERE customer_number = ? AND status = 'finished'
+            ''', (customer_number,))
+            
+            # אחרי UPDATE ל-released - הוסף logging
+            cursor.execute('SELECT name FROM stations WHERE id = ?', (station_id,))
+            station = cursor.fetchone()
+            if station:
+                log_to_history(cursor, customer_number, station_id, station['name'], 'released', 'released')
+            
+            conn.commit()
+            log_action('CUSTOMER RELEASED', f'Customer {customer_number} released')
+            
+            return jsonify({
+                'success': True,
+                'message': f'הלקוח {customer_number} שוחרר בהצלחה!'
+            }), 200
+    
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        log_action('RELEASE CUSTOMER ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 
 

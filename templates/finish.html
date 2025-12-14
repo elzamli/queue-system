@@ -92,6 +92,8 @@
             text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
         }
 
+
+
         .no-customer {
             font-size: 20px;
             opacity: 0.8;
@@ -311,6 +313,17 @@
                 <div class="current-number" id="currentNumber">-</div>
             </div>
 
+            <div id="customerHistory" style="
+                background: #f0f8ff;
+                border-right: 3px solid #008B8B;
+                border-radius: 8px;
+                padding: 15px;
+                margin-top: 20px;
+                max-height: 200px;
+                overflow-y: auto;
+                display: none;
+            "></div>
+
             <div class="queue-info" id="queueInfo">
                 בהמתנה להשלמה: <strong id="waitingCount">0</strong>
             </div>
@@ -384,18 +397,61 @@
             }
         }
 
-        function selectCustomer(customerNumber, stationName) {
-            if (selectedCustomer) {
-                document.getElementById(`item-${selectedCustomer}`).classList.remove('selected');
-            }
+function selectCustomer(customerNumber, stationName) {
+    if (selectedCustomer) {
+        document.getElementById(`item-${selectedCustomer}`).classList.remove('selected');
+    }
 
-            selectedCustomer = customerNumber;
-            document.getElementById(`item-${selectedCustomer}`).classList.add('selected');
-            document.getElementById('currentNumber').textContent = customerNumber;
-            document.getElementById('releaseBtn').disabled = false;
-            document.getElementById('message').style.display = 'none';
-        }
+    selectedCustomer = customerNumber;
+    document.getElementById(`item-${selectedCustomer}`).classList.add('selected');
+    document.getElementById('currentNumber').textContent = customerNumber;
+    document.getElementById('releaseBtn').disabled = false;
+    document.getElementById('message').style.display = 'none';
+    
+    // הוסף - טען היסטוריה
+    loadCustomerHistory(customerNumber);
+}
 
+async function loadCustomerHistory(customerNumber) {
+    try {
+        const response = await fetch(`/api/search-customer?number=${customerNumber}`);
+        const history = await response.json();
+        
+        displayHistory(history);
+    } catch (error) {
+        console.error('Error loading history:', error);
+    }
+}
+
+function displayHistory(history) {
+    const historyDiv = document.getElementById('customerHistory');
+    if (!historyDiv) return;
+    
+    historyDiv.style.display = 'block';  // ← הצג!
+    
+    if (history.length === 0) {
+        historyDiv.innerHTML = '<p style="color: #666; text-align: center;">אין היסטוריה</p>';
+        return;
+    }
+    
+    historyDiv.innerHTML = '<h4 style="color: #008B8B; margin-bottom: 10px;">📋 היסטוריה:</h4>' + 
+        history.map(h => `
+            <div style="padding: 8px; background: white; margin: 5px 0; border-radius: 4px; border-right: 3px solid #008B8B;">
+                <strong>${h.station_name}</strong> - 
+                <span style="color: #008B8B;">${h.status}</span>
+                <div style="font-size: 11px; color: #999; margin-top: 3px;">
+                    ${new Date(h.created_at).toLocaleTimeString('he-IL')}
+                </div>
+            </div>
+        `).join('');
+}
+
+
+
+
+
+
+ 
         async function releaseCustomer() {
             if (!selectedCustomer) {
                 showMessage('⚠️ בחר לקוח קודם', 'error');
