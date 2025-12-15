@@ -783,10 +783,11 @@ async function loginOperator() {
         return;
     }
     
-    // בדוק אם הקוד תקין (4 ספרות)
-    if (!/^\d{4}$/.test(code)) {
-        showLoginError('❌ קוד חייב להיות 4 ספרות');
-        return;
+    // בדוק אם הקוד תקין (  עד 8 4 ספרות)
+    
+    if (!/^\d{4,8}$/.test(code)) {
+    showLoginError('❌ קוד חייב להיות 4-8 ספרות');
+    return;
     }
     
     try {
