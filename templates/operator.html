@@ -532,9 +532,26 @@ function getStationId() {
                 const stations = await response.json();
                 const station = stations.find(s => s.id == stationId);
 
+
                 if (station) {
                     document.getElementById('stationName').textContent = station.name;
                     document.getElementById('stationDisplay').textContent = station.name;
+
+                    if (station.is_routing) {
+                        console.log('✅ IS ROUTING - נכנס לפה!');
+                        document.getElementById('toggleBtn').style.display = 'none';
+                        const buttonsGroup = document.querySelector('.buttons-group');
+                        const transferPokedBtn = document.createElement('button');
+                        transferPokedBtn.className = 'btn-release';
+                        transferPokedBtn.textContent = '🔴 העברה לפוקד';
+                        transferPokedBtn.onclick = transferToPoked;
+                        buttonsGroup.appendChild(transferPokedBtn);
+                    } else {
+                        console.log('❌ NOT ROUTING - נכנס לפה!');
+                        document.getElementById('toggleBtn').style.display = 'block';
+                    }
+
+    
                 }
             } catch (error) {
                 console.error('Error loading station info:', error);
@@ -743,13 +760,13 @@ async function confirmTransfer() {
         });
 
         // בדוק אם יש קוד בURL
-if (!getOperatorCode()) {
+//if (!getOperatorCode()) {
     // אם אין קוד - הצג מסך הזדהות
-    showLoginScreen();
-} else {
+  //  showLoginScreen();
+//} else {
     // אם יש קוד - הצג את מסך התחנה
-    init();
-}
+  //  init();
+//}
 
 function showLoginScreen() {
     document.querySelector('.main-card').innerHTML = `
@@ -919,6 +936,52 @@ function updateToggleButton(isActive) {
 
 // בעדכון Display, אחרי שטוען את הנתונים, הוסף:
 // updateToggleButton(station.is_active);
+
+async function transferToPoked() {
+    if (!currentCustomer) {
+        showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
+        return;
+    }
+
+    // בקשה לאישור
+    if (!confirm(`האם אתה בטוח שרוצה להעביר את לקוח ${currentCustomer} לפוקד?`)) {
+        return;
+    }
+
+    document.getElementById('loading').style.display = 'block';
+
+    try {
+        const response = await fetch('/api/transfer-to-poked', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                customer_number: currentCustomer
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showMessage(`✅ ${data.message}`, 'success');
+            currentCustomer = null;
+            await updateDisplay();
+        } else {
+            showMessage(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ שגיאה בהעברה לפוקד', 'error');
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+
+
+
+
+
     </script>
 </body>
 </html>

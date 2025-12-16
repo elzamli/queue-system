@@ -6,7 +6,8 @@
       "description": "טנא",
       "queue_group_id": "tana",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 2,
@@ -14,7 +15,8 @@
       "description": "טנא",
       "queue_group_id": "tana",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 3,
@@ -22,7 +24,8 @@
       "description": "אספקה",
       "queue_group_id": null,
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 4,
@@ -30,7 +33,8 @@
       "description": "רפואה",
       "queue_group_id": "refoa",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 5,
@@ -38,7 +42,8 @@
       "description": "רפואה",
       "queue_group_id": "refoa",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 6,
@@ -46,7 +51,8 @@
       "description": "משאן",
       "queue_group_id": null,
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 7,
@@ -54,7 +60,8 @@
       "description": "מצ",
       "queue_group_id": null,
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 8,
@@ -62,7 +69,8 @@
       "description": "מנהלה",
       "queue_group_id": "minhala",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 9,
@@ -70,7 +78,8 @@
       "description": "מנהלה",
       "queue_group_id": "minhala",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 10,
@@ -78,7 +87,8 @@
       "description": "אגם",
       "queue_group_id": "agam",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 11,
@@ -86,7 +96,8 @@
       "description": "אגם",
       "queue_group_id": "agam",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 12,
@@ -94,7 +105,8 @@
       "description": "מודיעין",
       "queue_group_id": "modin",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 13,
@@ -102,7 +114,8 @@
       "description": "מודיעין",
       "queue_group_id": "modin",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 14,
@@ -110,7 +123,8 @@
       "description": "מודיעין",
       "queue_group_id": "modin",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 15,
@@ -118,7 +132,8 @@
       "description": "פוקד - תור מיוחד",
       "queue_group_id": null,
       "hidden": 0,
-      "restricted": 1
+      "restricted": 1,
+      "is_routing": false
     },
     {
       "id": 16,
@@ -126,7 +141,8 @@
       "description": "תקשוב",
       "queue_group_id": "tikshuv",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 17,
@@ -134,7 +150,8 @@
       "description": "תקשוב",
       "queue_group_id": "tikshuv",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 18,
@@ -142,7 +159,8 @@
       "description": "תקשוב",
       "queue_group_id": "tikshuv",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 19,
@@ -150,7 +168,8 @@
       "description": "תקשוב",
       "queue_group_id": "tikshuv",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 20,
@@ -158,7 +177,8 @@
       "description": "אש",
       "queue_group_id": "esh",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 21,
@@ -166,7 +186,8 @@
       "description": "אש",
       "queue_group_id": "esh",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 22,
@@ -174,7 +195,8 @@
       "description": "אש",
       "queue_group_id": "esh",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 23,
@@ -182,7 +204,8 @@
       "description": "אש",
       "queue_group_id": "esh",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 24,
@@ -190,7 +213,8 @@
       "description": "990",
       "queue_group_id": "zy",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 25,
@@ -198,7 +222,8 @@
       "description": "990",
       "queue_group_id": "zy",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 26,
@@ -206,7 +231,8 @@
       "description": "990",
       "queue_group_id": "zy",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 27,
@@ -214,7 +240,8 @@
       "description": "990",
       "queue_group_id": "zy",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 28,
@@ -222,7 +249,8 @@
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 29,
@@ -230,7 +258,8 @@
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 30,
@@ -238,7 +267,8 @@
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 31,
@@ -246,7 +276,8 @@
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 32,
@@ -254,7 +285,8 @@
       "description": "אטל",
       "queue_group_id": "atal",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 33,
@@ -262,7 +294,8 @@
       "description": "אטל",
       "queue_group_id": "atal",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 34,
@@ -270,7 +303,8 @@
       "description": "רופא",
       "queue_group_id": "rofe",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 35,
@@ -278,7 +312,8 @@
       "description": "רופא",
       "queue_group_id": "rofe",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 36,
@@ -286,7 +321,8 @@
       "description": "רופא",
       "queue_group_id": "rofe",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
     },
     {
       "id": 37,
@@ -294,7 +330,26 @@
       "description": "רופא",
       "queue_group_id": "rofe",
       "hidden": 0,
-      "restricted": 0
+      "restricted": 0,
+      "is_routing": false
+    },
+    {
+      "id": 38,
+      "name": "ניתוב 1",
+      "description": "ניתוב",
+      "queue_group_id": "nituv",
+      "hidden": 0,
+      "restricted": 0,
+      "is_routing": true
+    },
+    {
+      "id": 39,
+      "name": "ניתוב 2",
+      "description": "ניתוב",
+      "queue_group_id": "nituv",
+      "hidden": 0,
+      "restricted": 0,
+      "is_routing": true
     }
   ],
   "operators": [
@@ -519,6 +574,18 @@
       "code": "37037",
       "station_id": 37,
       "name": "Operator 37"
+    },
+    {
+      "id": 38,
+      "code": "38038",
+      "station_id": 38,
+      "name": "Operator 38"
+    },
+    {
+      "id": 39,
+      "code": "39039",
+      "station_id": 39,
+      "name": "Operator 39"
     },
     {
       "id": 100,

@@ -105,6 +105,7 @@ def init_db():
                 description TEXT,
                 current_number INTEGER DEFAULT 0,
                 queue_group_id TEXT DEFAULT NULL,
+                  is_routing INTEGER DEFAULT 0,     
                 is_active INTEGER DEFAULT 1,
                 hidden INTEGER DEFAULT 0,
                 restricted INTEGER DEFAULT 0,
@@ -169,7 +170,8 @@ def init_db():
                         INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active)
                         VALUES (?, ?, ?, ?, ?, 1)
                     ''', (station['id'], station['name'], station['description'], 0, station.get('queue_group_id')))
-                """
+                
+
                 # Add stations
                 for station in config.get('stations', []):
                     cursor.execute('''
@@ -177,6 +179,14 @@ def init_db():
                         VALUES (?, ?, ?, ?, ?, 1, ?, ?)
                     ''', (station['id'], station['name'], station['description'], 0, 
                         station.get('queue_group_id'), station.get('hidden', 0), station.get('restricted', 0)))
+              """
+                # Add stations
+                for station in config.get('stations', []):
+                    cursor.execute('''
+                        INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active, hidden, restricted, is_routing)
+                        VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
+                    ''', (station['id'], station['name'], station['description'], 0, 
+                        station.get('queue_group_id'), station.get('hidden', 0), station.get('restricted', 0), station.get('is_routing', 0)))
 
 
                 # Add operators
@@ -326,7 +336,8 @@ def center_data():
                 'queue_group_id': station['queue_group_id'],
                 'current_number': current_number,
                 'waiting_list': waiting_list,
-                'is_active': station['is_active']
+                'is_active': station['is_active'],
+                'is_routing': station['is_routing']
             })
         
         conn.close()
@@ -367,7 +378,23 @@ def get_operator_station():
         log_action('GET OPERATOR STATION ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
-
+@app.route('/api/get-station/<int:station_id>', methods=['GET'])
+def get_station(station_id):
+    """Get station info"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM stations WHERE id = ?', (station_id,))
+        station = cursor.fetchone()
+        conn.close()
+        
+        if not station:
+            return jsonify({'error': 'Station not found'}), 404
+        
+        return jsonify(dict(station)), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/stations-list')
@@ -1154,7 +1181,7 @@ def search_customer():
     except Exception as e:
         log_action('SEARCH CUSTOMER ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
-
+"""
 @app.route('/api/transfer-to-poked', methods=['POST'])
 def transfer_to_poked():
     data = request.json
@@ -1209,7 +1236,7 @@ def transfer_to_poked():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
-"""
+
 
 @app.route('/api/finish-station/verify-operator', methods=['POST'])
 def verify_finish_operator():
