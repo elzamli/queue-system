@@ -20,8 +20,8 @@
     },
     {
       "id": 3,
-      "name": "אספקה",
-      "description": "אספקה",
+      "name": "הספקה",
+      "description": "הספקה",
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
@@ -227,24 +227,33 @@
     },
     {
       "id": 26,
-      "name": "990 3",
-      "description": "990",
-      "queue_group_id": "zy",
+      "name": "זרוע יבשה 1",
+      "description": "זרוע יבשה",
+      "queue_group_id": "zy1",
       "hidden": 0,
       "restricted": 0,
       "is_routing": false
     },
     {
       "id": 27,
-      "name": "990 4",
-      "description": "990",
-      "queue_group_id": "zy",
+      "name": "זרוע יבשה 2",
+      "description": "זרוע יבשה",
+      "queue_group_id": "zy1",
       "hidden": 0,
       "restricted": 0,
       "is_routing": false
     },
     {
       "id": 28,
+      "name": "זרוע יבשה 3",
+      "description": "זרוע יבשה",
+      "queue_group_id": "zy1",
+      "hidden": 0,
+      "restricted": 0,
+      "is_routing": false
+    },
+    {
+      "id": 29,
       "name": "96 1",
       "description": "96",
       "queue_group_id": "og",
@@ -253,7 +262,7 @@
       "is_routing": false
     },
     {
-      "id": 29,
+      "id": 30,
       "name": "96 2",
       "description": "96",
       "queue_group_id": "og",
@@ -262,7 +271,7 @@
       "is_routing": false
     },
     {
-      "id": 30,
+      "id": 31,
       "name": "96 3",
       "description": "96",
       "queue_group_id": "og",
@@ -271,7 +280,7 @@
       "is_routing": false
     },
     {
-      "id": 31,
+      "id": 32,
       "name": "96 4",
       "description": "96",
       "queue_group_id": "og",
@@ -280,7 +289,7 @@
       "is_routing": false
     },
     {
-      "id": 32,
+      "id": 33,
       "name": "אטל 1",
       "description": "אטל",
       "queue_group_id": "atal",
@@ -289,7 +298,7 @@
       "is_routing": false
     },
     {
-      "id": 33,
+      "id": 34,
       "name": "אטל 2",
       "description": "אטל",
       "queue_group_id": "atal",
@@ -298,7 +307,7 @@
       "is_routing": false
     },
     {
-      "id": 34,
+      "id": 35,
       "name": "רופא 1",
       "description": "רופא",
       "queue_group_id": "rofe",
@@ -307,7 +316,7 @@
       "is_routing": false
     },
     {
-      "id": 35,
+      "id": 36,
       "name": "רופא 2",
       "description": "רופא",
       "queue_group_id": "rofe",
@@ -316,7 +325,7 @@
       "is_routing": false
     },
     {
-      "id": 36,
+      "id": 37,
       "name": "רופא 3",
       "description": "רופא",
       "queue_group_id": "rofe",
@@ -325,16 +334,16 @@
       "is_routing": false
     },
     {
-      "id": 37,
-      "name": "רופא 4",
-      "description": "רופא",
-      "queue_group_id": "rofe",
+      "id": 38,
+      "name": "לוגיסטיקה",
+      "description": "לוגיסטיקה",
+      "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
       "is_routing": false
     },
     {
-      "id": 38,
+      "id": 39,
       "name": "ניתוב 1",
       "description": "ניתוב",
       "queue_group_id": "nituv",
@@ -343,7 +352,7 @@
       "is_routing": true
     },
     {
-      "id": 39,
+      "id": 40,
       "name": "ניתוב 2",
       "description": "ניתוב",
       "queue_group_id": "nituv",
@@ -588,6 +597,12 @@
       "name": "Operator 39"
     },
     {
+      "id": 40,
+      "code": "40040",
+      "station_id": 40,
+      "name": "Operator 40"
+    },
+    {
       "id": 100,
       "code": "9999",
       "station_id": null,
@@ -595,5 +610,8 @@
       "finish_operator": 1
     }
   ],
-  "admin_password": "admin123"
+  "admin_password": "admin123",
+  "center3": {
+    "rotation_interval_seconds": 15
+  }
 }

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מסך מרכזי 2 - יום מיצוי</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .station-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border-right: 5px solid #556B2F;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: auto;
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .station-card.inactive {
+            border-right: 5px solid #ff0000;
+            background: #fff5f5;
+            opacity: 0.7;
+        }
+
+        .status-badge {
+            color: red;
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .station-header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #556B2F;
+            padding-bottom: 12px;
+        }
+
+        .station-card.inactive .station-header {
+            border-bottom: 2px solid #ff0000;
+        }
+
+        .station-header h2 {
+            color: #2d3436;
+            font-size: 16px;
+            margin-bottom: 3px;
+            word-break: break-word;
+        }
+
+        .station-header p {
+            color: #666;
+            font-size: 11px;
+            font-style: italic;
+        }
+
+        .current-section {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #556B2F 0%, #6B8E23 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .current-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .current-number {
+            font-size: 36px;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .current-empty {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .waiting-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .waiting-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #556B2F;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .waiting-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .waiting-number {
+            background: #f5f5f5;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2d3436;
+            border-left: 3px solid #556B2F;
+            transition: all 0.2s ease;
+            line-height: 1.2;
+        }
+
+        .waiting-number:hover {
+            background: #556B2F;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .waiting-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #999;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .update-time {
+            text-align: center;
+            color: white;
+            font-size: 13px;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
+
+        .scrollbar-style::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .scrollbar-style::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .scrollbar-style::-webkit-scrollbar-thumb {
+            background: #556B2F;
+            border-radius: 10px;
+        }
+
+        .scrollbar-style::-webkit-scrollbar-thumb:hover {
+            background: #6B8E23;
+        }
+
+        @media (max-width: 1024px) {
+            .stations-grid {
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            }
+
+            .current-number {
+                font-size: 30px;
+            }
+
+            .station-header h2 {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .stations-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .current-number {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 יום מיצוי - מערכת ניהול תורים</h1>
+            <p>עדכון בזמן אמת של כל התחנות</p>
+        </div>
+
+        <div class="stations-grid" id="stationsGrid">
+            <div style="grid-column: 1 / -1; text-align: center; color: white;">
+                <p>טוען מערכת...</p>
+            </div>
+        </div>
+
+        <div class="update-time">
+            ⏰ עדכון אחרון: <span id="lastUpdate">--:--:--</span>
+        </div>
+    </div>
+
+    <script>
+        async function loadStations() {
+            try {
+                const response = await fetch('/api/center-data');
+                const stations = await response.json();
+
+                const grid = document.getElementById('stationsGrid');
+                
+                if (!stations || stations.length === 0) {
+                    grid.innerHTML = '<div style="color: white; text-align: center; grid-column: 1 / -1;">אין תחנות</div>';
+                    return;
+                }
+
+                grid.innerHTML = stations.map(station => {
+                    // מספר בשירות
+                    const currentDisplay = station.current_number 
+                        ? `<div class="current-number">${station.current_number}</div>`
+                        : '<div class="current-empty">אין בשירות</div>';
+
+                    // בדוק אם העמדה פעילה
+                    const statusClass = station.is_active ? '' : 'inactive';
+                    const statusBadge = station.is_active ? '' : '<div class="status-badge">🔴 בהפסקה</div>';
+
+                    // 5 ממתינים בלבד - בלי מספור!
+                    const waitingDisplay = station.waiting_list && station.waiting_list.length > 0
+                        ? station.waiting_list.slice(0, 5).map((num) => 
+                            `<div class="waiting-number">${num}</div>`
+                          ).join('')
+                        : '<div class="waiting-empty">אין בתור</div>';
+
+                    return `
+                        <div class="station-card ${statusClass}">
+                            ${statusBadge}
+                            <div class="station-header">
+                                <h2>${station.name}</h2>
+                                <p>${station.description}</p>
+                            </div>
+
+                            <div class="current-section">
+                                <div class="current-label">🔔 משחק כעת</div>
+                                ${currentDisplay}
+                            </div>
+
+                            <div class="waiting-section">
+                                <div class="waiting-label">📋 הממתינים</div>
+                                <div class="waiting-list scrollbar-style">
+                                    ${waitingDisplay}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // עדכן את הזמן האחרון
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = 
+                    now.toLocaleTimeString('he-IL');
+
+            } catch (error) {
+                console.error('Error loading stations:', error);
+                document.getElementById('stationsGrid').innerHTML = 
+                    '<div style="color: #ff6b6b; text-align: center; grid-column: 1 / -1;">שגיאה בטעינת הנתונים</div>';
+            }
+        }
+
+        // טוען בהתחלה
+        loadStations();
+
+        // עדכון כל שנייה
+        setInterval(loadStations, 1000);
+    </script>
+</body>
+</html>

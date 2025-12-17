@@ -1417,6 +1417,27 @@ def get_logs():
         log_action('GET LOGS ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/center2')
+def center2():
+    return render_template('center2.html')
+
+@app.route('/center3')
+@app.route('/center3/<int:page>')
+def center3(page=1):
+    return render_template('center3.html', page=page)
+
+@app.route('/api/center3-config')
+def get_center3_config():
+    try:
+        with open('config.json', 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        center3_config = config.get('center3', {})
+        rotation_interval = center3_config.get('rotation_interval_seconds', 15)
+        return jsonify({'rotation_interval_seconds': rotation_interval})
+    except:
+        return jsonify({'rotation_interval_seconds': 15})    
+
 # =====================
 # INITIALIZATION
 # =====================

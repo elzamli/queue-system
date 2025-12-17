@@ -236,6 +236,10 @@
             background: #d1ecf1;
             color: #0c5460;
         }
+        .status-released {
+            background: #ae9faa;
+            color: #79396b;
+        }
 
         .log-viewer {
             background: #1e1e1e;
@@ -462,7 +466,7 @@
     background: #e0e0e0;
 }
 
-}
+
 
 .poked-transfer-btn {
     padding: 5px 10px;
@@ -522,6 +526,14 @@
             <button class="refresh-btn" onclick="loadEntries()">🔄 רענן</button>
              <button class="refresh-btn" style="background: #4a7c59;" onclick="openInsertModal()">➕ הוסף לקוח לתור</button>
             </div>
+            <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; display: flex; gap: 10px; align-items: flex-end;">
+    <div style="flex: 1;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 600;">חיפוש מספר סידורי:</label>
+        <input type="number" id="filterNumber" placeholder="הקלד מספר..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+    </div>
+    <button onclick="filterEntries()" style="padding: 10px 20px; background: #4a7c59; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">🔍 חפש</button>
+    <button onclick="clearFilter()" style="padding: 10px 20px; background: #999; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">🔄 נקה סינון</button>
+</div>
              <div class="table-responsive">
                 <table>
                     <thead>
@@ -594,13 +606,18 @@
             <h2>עריכת רשומה</h2>
             <input type="hidden" id="entryId">
             <label>מס' סידורי:</label>
-            <input type="number" id="editNumber" min="1">
+            <div id="editNumber" style="padding: 12px; background: #f5f5f5; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 15px; font-weight: bold;"></div>
+           <!-- <input type="number" id="editNumber" min="1">-->
+
+
+
             <label>סטטוס:</label>
             <select id="editStatus">
                 <option value="waiting">בהמתנה</option>
                 <option value="called">בשירות</option>
                 <option value="completed">הושלם</option>
                 <option value="finished">סיום ליום</option>
+                <option value="released">שיחרור</option>
             </select>
             <div class="modal-buttons">
                 <button class="btn-save" onclick="saveEntry()">שמור</button>
@@ -678,7 +695,8 @@
                         'waiting': 'בהמתנה',
                         'called': 'בשירות',
                         'completed': 'הושלם',
-                        'finished': 'סיום ליום'
+                        'finished': 'סיום ליום',
+                        'released': 'שיחרור',
                     }[entry.status] || entry.status;
 
                     const createdAt = new Date(entry.created_at).toLocaleString('he-IL');
@@ -709,7 +727,7 @@
 
         function openEditModal(id, number, status) {
             document.getElementById('entryId').value = id;
-            document.getElementById('editNumber').value = number;
+            document.getElementById('editNumber').textContent = number;
             document.getElementById('editStatus').value = status;
             document.getElementById('editModal').classList.add('active');
         }
@@ -729,7 +747,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         id: parseInt(id),
-                        customer_number: parseInt(number),
                         status: status
                     })
                 });
@@ -932,12 +949,28 @@ async function transferEntryToPoked(customerNumber) {
         }
 
         // עדכון אוטומטי
+        //setInterval(() => {
+          //  if (isAdmin && document.getElementById('mainScreen').style.display !== 'none') {
+            //    loadEntries();
+              //  loadReport();
+           // }
+        //}, 5000);
+
         setInterval(() => {
             if (isAdmin && document.getElementById('mainScreen').style.display !== 'none') {
-                loadEntries();
-                loadReport();
+                // בדוק אם יש סינון פעיל
+                const filterValue = document.getElementById('filterNumber').value;
+                
+                if (!filterValue) {
+                    // אם אין סינון - רענן את הכל
+                    loadEntries();
+                    loadReport();
+                }
+                // אם יש סינון - אל תרעדן!
             }
         }, 5000);
+
+
 
         // Load stations for insert modal
 async function loadStationsForInsert() {
@@ -1083,6 +1116,96 @@ document.addEventListener('click', (e) => {
         closeTransferModal();
     }
 });
+
+let allEntries = [];  // שמור את כל הרשומות
+
+// שנה את loadEntries להשמור את הנתונים:
+async function loadEntries() {
+    try {
+        const response = await fetch('/api/admin/entries');  // ← תיקון!
+        const entries = await response.json();
+        
+        // שמור את הכל
+        allEntries = entries;
+        
+        // הצג בטבלה
+        displayEntries(allEntries);
+    } catch (error) {
+        console.error('Error loading entries:', error);
+    }
+}
+
+// פונקציית הצגה בטבלה
+function displayEntries(entries) {
+    const tbody = document.getElementById('entriesBody');  // ← הטבלה הנכונה!
+    
+    if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">אין רשומות</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = entries.map(entry => {
+        const statusClass = `status-${entry.status}`;
+        const statusText = {
+            'waiting': 'בהמתנה',
+            'called': 'בשירות',
+            'completed': 'הושלם',
+            'finished': 'סיום ליום',
+            'released': 'שיחרור',
+        }[entry.status] || entry.status;
+
+        const createdAt = new Date(entry.created_at).toLocaleString('he-IL');
+
+        return `
+            <tr>
+                <td><strong>${entry.customer_number}</strong></td>
+                <td>${entry.station_name}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${createdAt}</td>
+                <td>
+                    <button class="btn-small" onclick="openEditModal(${entry.id}, ${entry.customer_number}, '${entry.status}')">ערוך</button>
+                    <button class="btn-small delete" onclick="deleteEntry(${entry.id})">מחק</button>
+                    <button class="btn-small" style="background: #FF8C00;" onclick="openTransferModal(${entry.customer_number}, ${entry.station_id})">📍 העבר</button>
+                    <button class="poked-transfer-btn" onclick="transferEntryToPoked(${entry.customer_number})" style="background: #3498DB; padding: 5px 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">לפוקד</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}function filterEntries() {
+    const filterValue = document.getElementById('filterNumber').value;
+    
+    console.log('Filter value:', filterValue);
+    console.log('All entries:', allEntries);
+    
+    if (!filterValue) {
+        alert('⚠️ הקלד מספר סידורי לחיפוש');
+        return;
+    }
+    
+    // סנן את הרשומות
+    const filtered = allEntries.filter(entry => {
+        console.log('Checking:', entry.customer_number, 'vs', parseInt(filterValue));
+        return entry.customer_number == parseInt(filterValue);
+    });
+    
+    console.log('Filtered results:', filtered);
+    
+    if (filtered.length === 0) {
+        alert('❌ לא נמצאו רשומות');
+        displayEntries(allEntries);  // ← הצג את הכל שוב
+        return;
+    }
+    
+    // הצג את המסוננות
+    displayEntries(filtered);
+}
+// נקה את הסינון
+function clearFilter() {
+    document.getElementById('filterNumber').value = '';
+    displayEntries(allEntries);
+}
+
+
 
     </script>
 

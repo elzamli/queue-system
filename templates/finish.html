@@ -328,6 +328,18 @@
                 בהמתנה להשלמה: <strong id="waitingCount">0</strong>
             </div>
 
+
+            <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; display: flex; gap: 10px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">חיפוש מספר סידורי:</label>
+                    <input type="number" id="filterFinishNumber" placeholder="הקלד מספר..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <button onclick="filterFinishCustomers()" style="padding: 10px 20px; background: #008B8B; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">🔍 חפש</button>
+                <button onclick="clearFinishFilter()" style="padding: 10px 20px; background: #999; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">🔄 נקה סינון</button>
+            </div>
+
+
+
             <div class="finished-list">
                 <h3>📋 לקוחות להשלמה:</h3>
                 <div id="finishedList"></div>
@@ -366,37 +378,91 @@
                 return;
             }
 
+          
             await loadFinishedCustomers();
-            setInterval(loadFinishedCustomers, 3000);
-        }
 
-        async function loadFinishedCustomers() {
-            try {
-                const response = await fetch('/api/finish-station/finished-list');
-                const customers = await response.json();
-
-                document.getElementById('waitingCount').textContent = customers.length;
-
-                const listDiv = document.getElementById('finishedList');
-                if (customers.length === 0) {
-                    listDiv.innerHTML = '<p style="color: #666; text-align: center;">אין לקוחות בהמתנה להשלמה</p>';
-                    return;
+            setInterval(() => {
+                // בדוק אם יש סינון פעיל
+                const filterValue = document.getElementById('filterFinishNumber').value;
+                
+                if (!filterValue) {
+                    // אם אין סינון - רענן
+                    loadFinishedCustomers();
                 }
+                // אם יש סינון - אל תרענן!
+            }, 3000);
 
-                listDiv.innerHTML = customers.map(customer => `
-                    <div class="finished-item" onclick="selectCustomer(${customer.customer_number}, '${customer.station_name}')" id="item-${customer.customer_number}">
-                        <div>
-                            <div class="finished-item-number">${customer.customer_number}</div>
-                            <div class="finished-item-station">${customer.station_name}</div>
-                        </div>
-                        <div style="color: #666; font-size: 12px;">הושלם</div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading finished customers:', error);
-            }
+
+
+
         }
+let allFinishedCustomers = [];  // ← הוסף את זה בתחילה!
 
+async function loadFinishedCustomers() {
+    try {
+        const response = await fetch('/api/finish-station/finished-list');
+        const customers = await response.json();
+
+        // ← שמור את הכל
+        allFinishedCustomers = customers;
+
+        document.getElementById('waitingCount').textContent = customers.length;
+
+        // ← הצג את הכל (לא מסונן)
+        displayFinishCustomers(customers);
+    } catch (error) {
+        console.error('Error loading finished customers:', error);
+    }
+}
+
+// ← הוסף פונקציה חדשה להצגה
+function displayFinishCustomers(customers) {
+    const listDiv = document.getElementById('finishedList');
+    if (customers.length === 0) {
+        listDiv.innerHTML = '<p style="color: #666; text-align: center;">אין לקוחות בהמתנה להשלמה</p>';
+        return;
+    }
+
+    listDiv.innerHTML = customers.map(customer => `
+        <div class="finished-item" onclick="selectCustomer(${customer.customer_number}, '${customer.station_name}')" id="item-${customer.customer_number}">
+            <div>
+                <div class="finished-item-number">${customer.customer_number}</div>
+                <div class="finished-item-station">${customer.station_name}</div>
+            </div>
+            <div style="color: #666; font-size: 12px;">הושלם</div>
+        </div>
+    `).join('');
+}
+
+// ← הוסף סינון
+function filterFinishCustomers() {
+    const filterValue = document.getElementById('filterFinishNumber').value;
+    
+    if (!filterValue) {
+        alert('⚠️ הקלד מספר סידורי לחיפוש');
+        return;
+    }
+    
+    const filtered = allFinishedCustomers.filter(customer => 
+        customer.customer_number == parseInt(filterValue)
+    );
+    
+    if (filtered.length === 0) {
+        alert('❌ לא נמצא לקוח');
+        displayFinishCustomers(allFinishedCustomers);
+        return;
+    }
+    
+    displayFinishCustomers(filtered);
+}
+
+// ← הוסף ניקוי סינון
+function clearFinishFilter() {
+    document.getElementById('filterFinishNumber').value = '';
+    displayFinishCustomers(allFinishedCustomers);
+}
+
+        
 function selectCustomer(customerNumber, stationName) {
     if (selectedCustomer) {
         document.getElementById(`item-${selectedCustomer}`).classList.remove('selected');

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מסך מרכזי 3 - יום מיצוי</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
+            min-height: 100vh;
+            padding: 15px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .station-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+            border-right: 4px solid #556B2F;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: auto;
+        }
+
+        .station-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .station-card.inactive {
+            border-right: 4px solid #ff0000;
+            background: #fff5f5;
+            opacity: 0.7;
+        }
+
+        .status-badge {
+            color: red;
+            font-weight: bold;
+            font-size: 8px;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .station-header {
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #556B2F;
+            padding-bottom: 8px;
+        }
+
+        .station-card.inactive .station-header {
+            border-bottom: 2px solid #ff0000;
+        }
+
+        .station-header h2 {
+            color: #2d3436;
+            font-size: 12px;
+            margin-bottom: 0;
+            word-break: break-word;
+            font-weight: 700;
+        }
+
+        .current-section {
+            text-align: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: linear-gradient(135deg, #556B2F 0%, #6B8E23 100%);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .current-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 3px;
+            letter-spacing: 0.3px;
+        }
+
+        .current-number {
+            font-size: 22px;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .current-empty {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .waiting-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .waiting-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            color: #556B2F;
+            font-weight: 600;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .waiting-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .waiting-number {
+            background: #f5f5f5;
+            padding: 3px;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 9px;
+            font-weight: 600;
+            color: #2d3436;
+            border-left: 2px solid #556B2F;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+
+        .waiting-number:hover {
+            background: #556B2F;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .waiting-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #999;
+            padding: 6px;
+            font-size: 9px;
+        }
+
+        .update-time {
+            text-align: center;
+            color: white;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .scrollbar-style::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        .scrollbar-style::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .scrollbar-style::-webkit-scrollbar-thumb {
+            background: #556B2F;
+            border-radius: 10px;
+        }
+
+        .scrollbar-style::-webkit-scrollbar-thumb:hover {
+            background: #6B8E23;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 יום מיצוי - מערכת ניהול תורים</h1>
+        </div>
+
+        <div class="stations-grid" id="stationsGrid">
+            <div style="grid-column: 1 / -1; text-align: center; color: white;">
+                <p>טוען מערכת...</p>
+            </div>
+        </div>
+
+        <div class="update-time">
+            ⏰ עדכון: <span id="lastUpdate">--:--:--</span>
+        </div>
+    </div>
+
+    <script>
+        let allStations = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let rotationCounter = 0;
+        let rotationSeconds = 15; // ברירת מחדל
+
+        const STATIONS_PER_PAGE = 18;
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/center3-config');
+                const config = await response.json();
+                rotationSeconds = config.rotation_interval_seconds || 15;
+            } catch (error) {
+                console.warn('Could not load config, using default rotation_interval: 15 seconds');
+                rotationSeconds = 15;
+            }
+        }
+
+        async function loadStations() {
+            try {
+                const response = await fetch('/api/center-data');
+                const stations = await response.json();
+
+                if (!stations || stations.length === 0) {
+                    document.getElementById('stationsGrid').innerHTML = '<div style="color: white; text-align: center; grid-column: 1 / -1;">אין תחנות</div>';
+                    return;
+                }
+
+                allStations = stations;
+                totalPages = Math.ceil(allStations.length / STATIONS_PER_PAGE);
+
+                // לפי הספירה הנוכחית, חשב איזה עמוד להציג
+                const pageToShow = (Math.floor(rotationCounter / rotationSeconds) % totalPages) + 1;
+                displayPage(pageToShow);
+
+                // עדכן את הזמן
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = 
+                    now.toLocaleTimeString('he-IL');
+
+            } catch (error) {
+                console.error('Error loading stations:', error);
+                document.getElementById('stationsGrid').innerHTML = 
+                    '<div style="color: #ff6b6b; text-align: center; grid-column: 1 / -1;">שגיאה בטעינת הנתונים</div>';
+            }
+        }
+
+        function displayPage(pageNum) {
+            currentPage = pageNum;
+            if (currentPage > totalPages) {
+                currentPage = 1;
+            }
+
+            const startIdx = (currentPage - 1) * STATIONS_PER_PAGE;
+            const endIdx = startIdx + STATIONS_PER_PAGE;
+            const pageStations = allStations.slice(startIdx, endIdx);
+
+            const grid = document.getElementById('stationsGrid');
+            
+            grid.innerHTML = pageStations.map(station => {
+                // מספר בשירות
+                const currentDisplay = station.current_number 
+                    ? `<div class="current-number">${station.current_number}</div>`
+                    : '<div class="current-empty">אין</div>';
+
+                // בדוק אם העמדה פעילה
+                const statusClass = station.is_active ? '' : 'inactive';
+                const statusBadge = station.is_active ? '' : '<div class="status-badge">🔴 בהפסקה</div>';
+
+                // 5 ממתינים בלבד
+                const waitingDisplay = station.waiting_list && station.waiting_list.length > 0
+                    ? station.waiting_list.slice(0, 5).map((num) => 
+                        `<div class="waiting-number">${num}</div>`
+                      ).join('')
+                    : '<div class="waiting-empty">-</div>';
+
+                return `
+                    <div class="station-card ${statusClass}">
+                        ${statusBadge}
+                        <div class="station-header">
+                            <h2>${station.name}</h2>
+                        </div>
+
+                        <div class="current-section">
+                            <div class="current-label">🔔</div>
+                            ${currentDisplay}
+                        </div>
+
+                        <div class="waiting-section">
+                            <div class="waiting-label">📋</div>
+                            <div class="waiting-list scrollbar-style">
+                                ${waitingDisplay}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // טוען קונפיג בהתחלה
+        async function init() {
+            await loadConfig();
+            await loadStations();
+
+            // עדכון כל שנייה
+            setInterval(() => {
+                rotationCounter++;
+                loadStations();
+            }, 1000);
+        }
+
+        // התחל את התוכנית
+        init();
+    </script>
+</body>
+</html>
