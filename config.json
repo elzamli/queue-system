@@ -612,6 +612,6 @@
   ],
   "admin_password": "admin123",
   "center3": {
-    "rotation_interval_seconds": 15
+    "rotation_interval_seconds": 7
   }
 }
