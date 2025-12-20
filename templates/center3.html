@@ -14,14 +14,17 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
-            min-height: 100vh;
+            height: 100vh;
             padding: 15px;
             direction: rtl;
+            overflow: hidden;
         }
 
         .container {
             max-width: 100%;
-            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -32,36 +35,43 @@
 
         .header h1 {
             font-size: 36px;
-            margin-bottom: 0;
+            margin-bottom: 5px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
         }
 
         .stations-grid {
             display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+            flex: 1;
+            margin-bottom: 10px;
         }
 
         .station-card {
             background: white;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
-            border-right: 4px solid #556B2F;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border-right: 5px solid #556B2F;
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
-            min-height: auto;
+            overflow: hidden;
         }
 
         .station-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
         }
 
         .station-card.inactive {
-            border-right: 4px solid #ff0000;
+            border-right: 5px solid #ff0000;
             background: #fff5f5;
             opacity: 0.7;
         }
@@ -69,14 +79,14 @@
         .status-badge {
             color: red;
             font-weight: bold;
-            font-size: 8px;
+            font-size: 10px;
             margin-bottom: 4px;
             text-align: center;
         }
 
         .station-header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-bottom: 2px solid #556B2F;
             padding-bottom: 8px;
         }
@@ -87,7 +97,7 @@
 
         .station-header h2 {
             color: #2d3436;
-            font-size: 12px;
+            font-size: 15px;
             margin-bottom: 0;
             word-break: break-word;
             font-weight: 700;
@@ -95,30 +105,30 @@
 
         .current-section {
             text-align: center;
-            margin-bottom: 10px;
-            padding: 10px;
+            margin-bottom: 8px;
+            padding: 12px 8px;
             background: linear-gradient(135deg, #556B2F 0%, #6B8E23 100%);
             border-radius: 8px;
             color: white;
         }
 
         .current-label {
-            font-size: 8px;
+            font-size: 10px;
             text-transform: uppercase;
             opacity: 0.9;
-            margin-bottom: 3px;
-            letter-spacing: 0.3px;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
         }
 
         .current-number {
-            font-size: 22px;
+            font-size: 32px;
             font-weight: bold;
             line-height: 1;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .current-empty {
-            font-size: 10px;
+            font-size: 13px;
             opacity: 0.8;
         }
 
@@ -126,61 +136,66 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .waiting-label {
-            font-size: 8px;
+            font-size: 10px;
             text-transform: uppercase;
             color: #556B2F;
             font-weight: 600;
-            margin-bottom: 4px;
-            letter-spacing: 0.3px;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
         }
 
         .waiting-list {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 3px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
             flex: 1;
             overflow-y: auto;
         }
 
         .waiting-number {
             background: #f5f5f5;
-            padding: 3px;
-            border-radius: 3px;
+            padding: 5px;
+            border-radius: 5px;
             text-align: center;
-            font-size: 9px;
+            font-size: 13px;
             font-weight: 600;
             color: #2d3436;
-            border-left: 2px solid #556B2F;
+            border-left: 3px solid #556B2F;
             transition: all 0.2s ease;
-            line-height: 1;
         }
 
         .waiting-number:hover {
             background: #556B2F;
             color: white;
-            transform: scale(1.05);
+            transform: scale(1.02);
+        }
+
+        .waiting-number.top-waiting {
+            font-weight: bold;
+            font-size: 15px;
+            background: #e8f5e9;
         }
 
         .waiting-empty {
-            grid-column: 1 / -1;
             text-align: center;
             color: #999;
-            padding: 6px;
-            font-size: 9px;
+            padding: 8px;
+            font-size: 11px;
         }
 
         .update-time {
             text-align: center;
             color: white;
-            font-size: 11px;
+            font-size: 13px;
             opacity: 0.7;
         }
 
         .scrollbar-style::-webkit-scrollbar {
-            width: 2px;
+            width: 3px;
         }
 
         .scrollbar-style::-webkit-scrollbar-track {
@@ -202,6 +217,7 @@
     <div class="container">
         <div class="header">
             <h1>🎮 יום מיצוי - מערכת ניהול תורים</h1>
+            <p>עדכון בזמן אמת של כל התחנות</p>
         </div>
 
         <div class="stations-grid" id="stationsGrid">
@@ -222,7 +238,7 @@
         let rotationCounter = 0;
         let rotationSeconds = 15; // ברירת מחדל
 
-        const STATIONS_PER_PAGE = 18;
+        const STATIONS_PER_PAGE = 14; // 7 עמודות * 2 שורות
 
         async function loadConfig() {
             try {
@@ -288,10 +304,10 @@
 
                 // 5 ממתינים בלבד
                 const waitingDisplay = station.waiting_list && station.waiting_list.length > 0
-                    ? station.waiting_list.slice(0, 5).map((num) => 
-                        `<div class="waiting-number">${num}</div>`
+                    ? station.waiting_list.slice(0, 5).map((num, index) => 
+                        `<div class="waiting-number ${index < 2 ? 'top-waiting' : ''}">${num}</div>`
                       ).join('')
-                    : '<div class="waiting-empty">-</div>';
+                    : '<div class="waiting-empty">אין בתור</div>';
 
                 return `
                     <div class="station-card ${statusClass}">
@@ -301,12 +317,13 @@
                         </div>
 
                         <div class="current-section">
-                            <div class="current-label">🔔</div>
+                                                        <div class="current-label">🔔 בראיון כעת</div>
+
                             ${currentDisplay}
                         </div>
 
                         <div class="waiting-section">
-                            <div class="waiting-label">📋</div>
+                            <div class="waiting-label">📋 ממתינים</div>
                             <div class="waiting-list scrollbar-style">
                                 ${waitingDisplay}
                             </div>

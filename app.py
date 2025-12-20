@@ -163,23 +163,7 @@ def init_db():
         if os.path.exists('config.json'):
             with open('config.json', 'r', encoding='utf-8') as f:
                 config = json.load(f)
-                """
-                # Add stations
-                for station in config.get('stations', []):
-                    cursor.execute('''
-                        INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active)
-                        VALUES (?, ?, ?, ?, ?, 1)
-                    ''', (station['id'], station['name'], station['description'], 0, station.get('queue_group_id')))
-                
-
-                # Add stations
-                for station in config.get('stations', []):
-                    cursor.execute('''
-                        INSERT INTO stations (id, name, description, current_number, queue_group_id, is_active, hidden, restricted)
-                        VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-                    ''', (station['id'], station['name'], station['description'], 0, 
-                        station.get('queue_group_id'), station.get('hidden', 0), station.get('restricted', 0)))
-              """
+         
                 # Add stations
                 for station in config.get('stations', []):
                     cursor.execute('''
@@ -274,9 +258,10 @@ def center_data():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+        """
         cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
-    
+        """
+        cursor.execute('SELECT * FROM stations ORDER BY id')
         stations = cursor.fetchall()
         
         result = []
@@ -403,9 +388,7 @@ def stations_list():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        """
-        cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
-        """
+       
         cursor.execute('''
             SELECT s.* FROM stations s
             WHERE s.hidden = 0 AND s.restricted = 0

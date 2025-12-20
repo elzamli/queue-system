@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>עובד בתחנה - יום כיף</title>
+    <title>עמדת מראיין-יום מיצוי</title>
     <style>
         * {
             margin: 0;
@@ -150,15 +150,23 @@
         }
 
         .btn-release {
-            background: #8B0000;
+            background: #88ae46;
             color: white;
         }
 
         .btn-release:hover {
+            background: #3bb359;
+            transform: translateY(-2px);
+        }
+        .btn-poked {
+            background: #8B0000;
+            color: white;
+        }
+
+        .btn-poked:hover {
             background: #a00000;
             transform: translateY(-2px);
         }
-
         .message {
             padding: 15px;
             border-radius: 8px;
@@ -541,11 +549,20 @@ function getStationId() {
                         console.log('✅ IS ROUTING - נכנס לפה!');
                         document.getElementById('toggleBtn').style.display = 'none';
                         const buttonsGroup = document.querySelector('.buttons-group');
+                     
                         const transferPokedBtn = document.createElement('button');
-                        transferPokedBtn.className = 'btn-release';
+                        transferPokedBtn.className = 'btn-poked';
                         transferPokedBtn.textContent = '🔴 העברה לפוקד';
                         transferPokedBtn.onclick = transferToPoked;
                         buttonsGroup.appendChild(transferPokedBtn);
+                         const searchBtn = document.createElement('button');
+                        searchBtn.className = 'btn-secondary';
+                        searchBtn.textContent = '🔍 חפש מועמד';
+                        searchBtn.onclick = openSearchModal;
+                        searchBtn.style.background = '#003366';  // כחול כהה
+                        //buttonsGroup.insertBefore(searchBtn, document.querySelector('.btn-release'));
+                        buttonsGroup.appendChild(searchBtn);
+
                     } else {
                         console.log('❌ NOT ROUTING - נכנס לפה!');
                         document.getElementById('toggleBtn').style.display = 'block';
@@ -977,11 +994,166 @@ async function transferToPoked() {
         document.getElementById('loading').style.display = 'none';
     }
 }
+// ============================================
+// חיפוש מועמד - פונקציות חדשות
+// ============================================
 
+function openSearchModal() {
+    document.getElementById('searchModal').classList.add('active');
+    document.getElementById('searchNumber').focus();
+    clearSearch();
+}
+
+function closeSearchModal() {
+    document.getElementById('searchModal').classList.remove('active');
+    clearSearch();
+}
+
+function clearSearch() {
+    document.getElementById('searchNumber').value = '';
+    document.getElementById('searchMessage').style.display = 'none';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('historyList').innerHTML = '';
+}
+
+async function performSearch() {
+    const customerNumber = document.getElementById('searchNumber').value;
+    
+    if (!customerNumber) {
+        showSearchError('⚠️ הקלד מספר סידורי');
+        return;
+    }
+
+    document.getElementById('searchLoading').style.display = 'block';
+    document.getElementById('searchMessage').style.display = 'none';
+    document.getElementById('searchResults').style.display = 'none';
+
+    try {
+        const response = await fetch(`/api/search-customer?number=${customerNumber}`);
+        const history = await response.json();
+
+        if (!response.ok || history.length === 0) {
+            showSearchError(`❌ מועמד ${customerNumber} לא נמצא`);
+            return;
+        }
+
+        displaySearchResults(history, customerNumber);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showSearchError('❌ שגיאה בחיפוש');
+    } finally {
+        document.getElementById('searchLoading').style.display = 'none';
+    }
+}
+
+function displaySearchResults(history, customerNumber) {
+    const resultsDiv = document.getElementById('searchResults');
+    const historyList = document.getElementById('historyList');
+    const messageDiv = document.getElementById('searchMessage');
+
+    messageDiv.innerHTML = `✅ מועמד ${customerNumber} נמצא`;
+    messageDiv.className = 'success';
+    messageDiv.style.display = 'block';
+    messageDiv.style.background = '#d4edda';
+    messageDiv.style.color = '#155724';
+    messageDiv.style.border = '2px solid #c3e6cb';
+
+    if (history.length === 0) {
+        historyList.innerHTML = '<p style="color: #666; text-align: center;">אין היסטוריה</p>';
+    } else {
+        historyList.innerHTML = history.map(h => `
+            <div style="padding: 10px; background: white; margin: 8px 0; border-radius: 6px; border-right: 3px solid #556B2F;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="color: #2d3436; font-size: 14px;">${h.station_name}</strong>
+                        <div style="color: #556B2F; font-size: 12px; margin-top: 3px;">${h.status}</div>
+                    </div>
+                    <div style="color: #999; font-size: 11px;">
+                        ${new Date(h.created_at).toLocaleTimeString('he-IL')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    resultsDiv.style.display = 'block';
+}
+
+function showSearchError(message) {
+    const messageDiv = document.getElementById('searchMessage');
+    messageDiv.innerHTML = message;
+    messageDiv.className = 'error';
+    messageDiv.style.display = 'block';
+    messageDiv.style.background = '#f8d7da';
+    messageDiv.style.color = '#721c24';
+    messageDiv.style.border = '2px solid #f5c6cb';
+    document.getElementById('searchResults').style.display = 'none';
+}
+
+// סגור modal בלחיצה על X
+document.addEventListener('click', (e) => {
+    const searchModal = document.getElementById('searchModal');
+    if (e.target === searchModal) {
+        closeSearchModal();
+    }
+});
+
+// בעיתור בקלט - חפש בEnter
+document.addEventListener('keypress', (e) => {
+    const searchInput = document.getElementById('searchNumber');
+    if (searchInput && e.key === 'Enter') {
+        performSearch();
+    }
+});
 
 
 
 
     </script>
+
+
+<!-- Search Modal -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🔍 חפש מועמד</h2>
+            <p>הקלד את מספר הסידורי של המועמד</p>
+        </div>
+
+        <div class="form-group">
+            <label for="searchNumber">מספר סידורי:</label>
+            <input type="number" id="searchNumber" placeholder="הקלד מספר..." style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+        </div>
+
+        <div id="searchMessage" style="margin: 15px 0; padding: 12px; border-radius: 8px; display: none; font-size: 13px;"></div>
+
+        <div id="searchResults" style="margin: 15px 0; padding: 15px; background: #f9f9f9; border-radius: 8px; max-height: 250px; overflow-y: auto; display: none;">
+            <h4 style="color: #2d3436; margin-bottom: 12px; font-size: 14px;">📋 היסטוריה:</h4>
+            <div id="historyList"></div>
+        </div>
+
+        <div class="loading" id="searchLoading">
+            <div class="spinner"></div>
+            <p>משלח...</p>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-submit" onclick="performSearch()">
+                🔍 חפש
+            </button>
+            <button class="modal-btn modal-btn-cancel" onclick="closeSearchModal()">
+                ❌ סגור
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
 </body>
 </html>
