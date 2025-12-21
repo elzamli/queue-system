@@ -28,8 +28,13 @@ def set_security_headers(response):
     return response
 
 # Database configuration
-DB_FILE = 'queue_system.db'
-LOG_FILE = 'queue_system.log'
+# Check if running on Render (persistent disk) or locally
+if os.path.exists('/var/data'):
+    DB_FILE = '/var/data/queue_system.db'
+    LOG_FILE = '/var/data/queue_system.log'
+else:
+    DB_FILE = 'queue_system.db'
+    LOG_FILE = 'queue_system.log'
 
 # Logging setup
 logging.basicConfig(
