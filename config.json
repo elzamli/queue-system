@@ -56,8 +56,8 @@
     },
     {
       "id": 7,
-      "name": "מצ",
-      "description": "מצ",
+      "name": "לוגיסטיקה",
+      "description": "לוגיסטיקה",
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
@@ -326,8 +326,8 @@
     },
     {
       "id": 37,
-      "name": "לוגיסטיקה",
-      "description": "לוגיסטיקה",
+      "name": "מצ",
+      "description":  "מצ",
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
