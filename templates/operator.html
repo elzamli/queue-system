@@ -421,7 +421,7 @@
         <div class="main-card">
             <div class="station-info">
                 <div class="station-name" id="stationName">תחנה</div>
-                <div class="operator-name" id="operatorName">עובד</div>
+                <div class="operator-name" id="operatorName">מראיין</div>
             </div>
 
             <div id="message" class="message"></div>
@@ -633,7 +633,7 @@ function getStationId() {
         
 //async function callNext() {
 //    if (!operatorCode) {
-//        showMessage('❌ לא נמצא קוד עובד', 'error');
+//        showMessage('❌ לא נמצא קוד מראיין', 'error');
 //        return;
 //    }
 
@@ -668,20 +668,20 @@ function getStationId() {
     //}
 //}
         // פתח modal להעברה
-  //      function openTransferModal() {
-    //        if (!currentCustomer) {
-      //          showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
-        //        return;
-          //  }
+        function openTransferModal() {
+            if (!currentCustomer) {
+                showMessage('⚠️ אין מועמד בשירות כרגע', 'error');
+                return;
+            }
 
-            //document.getElementById('modalCustomerInfo').textContent = `העברת לקוח ${currentCustomer}`;
-            //document.getElementById('transferModal').classList.add('active');
-        //}
+            document.getElementById('modalCustomerInfo').textContent = `העברת מועמד ${currentCustomer}`;
+            document.getElementById('transferModal').classList.add('active');
+        }
 
         // סגור modal
-        //function closeTransferModal() {
-         //   document.getElementById('transferModal').classList.remove('active');
-        //}
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.remove('active');
+        }
 
         // אישור העברה
 async function callNext() {
@@ -698,7 +698,7 @@ async function callNext() {
     }
 
     if (!operatorCode) {
-        showMessage('❌ לא נמצא קוד עובד', 'error');
+        showMessage('❌ לא נמצא קוד מראיין', 'error');
         return;
     }
 
@@ -721,7 +721,7 @@ async function callNext() {
         const data = await response.json();
 
         if (response.ok) {
-            showMessage(`✅ לקוח ${data.customer_number} נקרא`, 'success');
+            showMessage(`✅ מועמד ${data.customer_number} נקרא`, 'success');
             await updateDisplay();
         } else {
             showMessage(`❌ ${data.error || 'לא יכול לקרוא הבא'}`, 'error');
@@ -741,7 +741,7 @@ async function callNext() {
        
 async function confirmTransfer() {
     if (!currentCustomer) {
-        showMessage('❌ אין לקוח בשירות', 'error');
+        showMessage('❌ אין מועמד בשירות', 'error');
         return;
     }
 
@@ -773,7 +773,7 @@ async function confirmTransfer() {
             closeTransferModal();
             
             // הצג הודעת הצלחה
-            showMessage(`✅ לקוח ${currentCustomer} הועבר בהצלחה!`, 'success');
+            showMessage(`✅ מועמד ${currentCustomer} הועבר בהצלחה!`, 'success');
             
             // עדכן את התצוגה
             await updateDisplay();
@@ -794,12 +794,12 @@ async function confirmTransfer() {
         // העברה לעמדת שחרור
         async function finishCustomer() {
     if (!currentCustomer) {
-        showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
+        showMessage('⚠️ אין מועמד בשירות כרגע', 'error');
         return;
     }
 
     // בקשה לאישור
-    if (!confirm(`האם אתה בטוח שאתה רוצה לסיים את הלקוח ${currentCustomer} מהמערכת?`)) {
+    if (!confirm(`האם אתה בטוח שאתה רוצה לסיים עם המועמד ${currentCustomer} מהמערכת?`)) {
         return;
     }
 
@@ -827,7 +827,7 @@ async function confirmTransfer() {
         }
     } catch (error) {
         console.error('Error:', error);
-        showMessage('❌ שגיאה בסיום לקוח', 'error');
+        showMessage('❌ שגיאה בסיום מועמד', 'error');
     } finally {
         document.getElementById('loading').style.display = 'none';
     }
@@ -854,14 +854,14 @@ function showLoginScreen() {
     document.querySelector('.main-card').innerHTML = `
         <div style="text-align: center;">
             <div style="font-size: 48px; margin-bottom: 20px;">🔐</div>
-            <h2 style="color: #2d3436; margin-bottom: 30px; font-size: 24px;">הזדהות עובד</h2>
+            <h2 style="color: #2d3436; margin-bottom: 30px; font-size: 24px;">הזדהות מראיין</h2>
             
             <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 30px; border-right: 3px solid #556B2F; color: #333; font-size: 14px;">
-                📌 הקלד את קוד העובד שלך כדי להתחיל
+                📌 הקלד את קוד המראיין שלך כדי להתחיל
             </div>
             
             <div style="margin-bottom: 20px;">
-                <label style="display: block; color: #333; font-weight: 600; margin-bottom: 10px; text-align: right;">קוד עובד:</label>
+                <label style="display: block; color: #333; font-weight: 600; margin-bottom: 10px; text-align: right;">קוד מראיין:</label>
                 <input type="password" id="operatorCode" placeholder="הקלד קוד" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; text-align: center;" autofocus>
             </div>
             
@@ -902,7 +902,7 @@ async function loginOperator() {
             // הפנה ל-/operator/{station_id} עם הקוד בURL
             window.location.href = `/operator/${data.station_id}?code=${code}`;
         } else {
-            showLoginError('❌ קוד עובד לא תקין!');
+            showLoginError('❌ קוד מראיין לא תקין!');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -1021,12 +1021,12 @@ function updateToggleButton(isActive) {
 
 async function transferToPoked() {
     if (!currentCustomer) {
-        showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
+        showMessage('⚠️ אין מועמד בשירות כרגע', 'error');
         return;
     }
 
     // בקשה לאישור
-    if (!confirm(`האם אתה בטוח שרוצה להעביר את לקוח ${currentCustomer} לפוקד?`)) {
+    if (!confirm(`האם אתה בטוח שרוצה להעביר את המועמד ${currentCustomer} לפוקד?`)) {
         return;
     }
 
