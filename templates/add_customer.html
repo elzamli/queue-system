@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>הוספת לקוח - יום כיף</title>
+    <title>הוספת מועמד - יום מיצוי</title>
     <style>
         * {
             margin: 0;
@@ -412,7 +412,7 @@
     <!-- Transfer Modal -->
     <div id="transferModal" class="modal">
         <div class="modal-content">
-            <h2>⚠️ הלקוח כבר בתור!</h2>
+            <h2>⚠️ המועמד כבר בתור!</h2>
             <p id="modalMessage"></p>
             <p style="color: #556B2F; font-weight: 600; margin-top: 20px;">האם אתה מעוניין להעביר אותו?</p>
             <div class="modal-buttons">
@@ -553,7 +553,7 @@
             const modal = document.getElementById('transferModal');
             const message = document.getElementById('modalMessage');
 
-            message.innerHTML = `לקוח <strong>${data.customer_number}</strong> נמצא כבר בתחנה <strong>${data.existing_station}</strong><br><br>
+            message.innerHTML = `המועמד <strong>${data.customer_number}</strong> נמצא כבר בתחנה <strong>${data.existing_station}</strong><br><br>
             האם אתה מעוניין להעבירו לתחנה <strong>${data.new_station}</strong>?`;
 
             modal.classList.add('active');
