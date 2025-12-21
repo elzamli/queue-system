@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול תחנות - יום מיצוי</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-card h1 {
+            text-align: center;
+            color: #2d3436;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #556B2F;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: #556B2F;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-login:hover {
+            background: #6B8E23;
+        }
+
+        .main-screen {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2d3436;
+            font-size: 28px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-back {
+            background: #556B2F;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: #6B8E23;
+        }
+
+        .btn-logout {
+            background: #ccc;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-logout:hover {
+            background: #bbb;
+        }
+
+        .content-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-card h2 {
+            color: #2d3436;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .info-box {
+            background: #f0f8ff;
+            border-right: 4px solid #556B2F;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .station-card {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .station-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .station-card.hidden {
+            background: #fff5f5;
+            border-color: #ffcccc;
+            opacity: 0.7;
+        }
+
+        .station-info {
+            flex: 1;
+        }
+
+        .station-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 5px;
+        }
+
+        .station-id {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .station-status {
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .station-status.visible {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .station-status.hidden {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .toggle-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.show {
+            background: #28a745;
+            color: white;
+        }
+
+        .toggle-btn.show:hover {
+            background: #218838;
+        }
+
+        .toggle-btn.hide {
+            background: #dc3545;
+            color: white;
+        }
+
+        .toggle-btn.hide:hover {
+            background: #c82333;
+        }
+
+        .toggle-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            background: #556B2F;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #6B8E23;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: #556B2F;
+        }
+
+        .filter-btn.active {
+            background: #556B2F;
+            color: white;
+            border-color: #556B2F;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .stations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .station-card {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- מסך כניסה -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <h1>🔐 ניהול תחנות</h1>
+            <div class="form-group">
+                <label for="passwordInput">סיסמה:</label>
+                <input 
+                    type="password" 
+                    id="passwordInput" 
+                    placeholder="הקלד סיסמה"
+                    autocomplete="off"
+                    onkeypress="if(event.key === 'Enter') login()"
+                >
+            </div>
+            <button type="button" class="btn-login" onclick="login()">כנס</button>
+        </div>
+    </div>
+
+    <!-- מסך ראשי -->
+    <div class="main-screen" id="mainScreen">
+        <div class="header">
+            <h1>🎛️ ניהול תחנות</h1>
+            <div class="header-buttons">
+                <a href="/admin" class="btn-back">← חזרה לניהול</a>
+                <button class="btn-logout" onclick="logout()">יציאה</button>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2>הצגה/הסתרה של תחנות</h2>
+            
+            <div class="info-box">
+                ℹ️ כאן תוכל לשלוט אילו תחנות יוצגו במסך המרכזי. תחנות מוסתרות לא יופיעו למשתמשים אבל ימשיכו לפעול ברקע.
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <button class="refresh-btn" onclick="loadStations()">🔄 רענן</button>
+
+            <div class="filter-section">
+                <button class="filter-btn active" onclick="filterStations('all', this)">הכל</button>
+                <button class="filter-btn" onclick="filterStations('visible', this)">מוצגות בלבד</button>
+                <button class="filter-btn" onclick="filterStations('hidden', this)">מוסתרות בלבד</button>
+            </div>
+
+            <div class="stations-grid" id="stationsGrid">
+                <div class="loading">טוען תחנות...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminPassword = '';
+        let allStations = [];
+        let currentFilter = 'all';
+
+        async function login() {
+            const password = document.getElementById('passwordInput').value;
+
+            try {
+                const response = await fetch('/api/admin/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    adminPassword = password;
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainScreen').style.display = 'block';
+                    loadStations();
+                } else {
+                    alert('❌ סיסמה שגויה');
+                }
+            } catch (error) {
+                console.error('שגיאה:', error);
+                alert('❌ שגיאה בכניסה');
+            }
+        }
+
+        function logout() {
+            adminPassword = '';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            
+            setTimeout(() => {
+                messageDiv.className = 'message';
+            }, 4000);
+        }
+
+        async function loadStations() {
+            try {
+                const response = await fetch('/api/admin/all-stations');
+                const stations = await response.json();
+                
+                allStations = stations;
+                displayStations(stations);
+            } catch (error) {
+                console.error('שגיאה:', error);
+                document.getElementById('stationsGrid').innerHTML = 
+                    '<div class="loading" style="color: red;">❌ שגיאה בטעינת תחנות</div>';
+            }
+        }
+
+        function displayStations(stations) {
+            const grid = document.getElementById('stationsGrid');
+            
+            // סינון
+            let filtered = stations;
+            if (currentFilter === 'visible') {
+                filtered = stations.filter(s => !s.hidden);
+            } else if (currentFilter === 'hidden') {
+                filtered = stations.filter(s => s.hidden);
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="loading">אין תחנות להצגה</div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(station => {
+                const isHidden = station.hidden === 1;
+                const cardClass = isHidden ? 'station-card hidden' : 'station-card';
+                const statusClass = isHidden ? 'station-status hidden' : 'station-status visible';
+                const statusText = isHidden ? '🔴 מוסתר' : '🟢 מוצג';
+                const btnClass = isHidden ? 'toggle-btn show' : 'toggle-btn hide';
+                const btnText = isHidden ? '👁️ הצג' : '🙈 הסתר';
+
+                return `
+                    <div class="${cardClass}" id="station-${station.id}">
+                        <div class="station-info">
+                            <div class="station-name">${station.name}</div>
+                            <div class="station-id">מזהה: ${station.id}</div>
+                            <div class="${statusClass}">${statusText}</div>
+                        </div>
+                        <button class="${btnClass}" onclick="toggleStation(${station.id})" id="btn-${station.id}">
+                            ${btnText}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function toggleStation(stationId) {
+            const btn = document.getElementById(`btn-${stationId}`);
+            btn.disabled = true;
+            btn.textContent = '⏳';
+
+            try {
+                const response = await fetch(`/api/admin/toggle-station-visibility/${stationId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: adminPassword })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    
+                    // עדכן את הסטטוס המקומי
+                    const station = allStations.find(s => s.id === stationId);
+                    if (station) {
+                        station.hidden = data.hidden;
+                    }
+                    
+                    // רענן את התצוגה
+                    displayStations(allStations);
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error('שגיאה:', error);
+                showMessage('❌ שגיאה בשינוי סטטוס', 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function filterStations(filter, btnElement) {
+            currentFilter = filter;
+            
+            // עדכן כפתורים
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            
+            // הצג מחדש
+            displayStations(allStations);
+        }
+    </script>
+</body>
+</html>

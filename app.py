@@ -232,14 +232,7 @@ def operator(station_id):
     """Operator screen"""
     log_action('VIEW ACCESSED', f'Operator screen - Station {station_id}')
     return render_template('operator.html', station_id=station_id)
-""""
-@app.route('/operator')
-def operator():
-   
-    log_action('VIEW ACCESSED', 'Operator screen')
-    return render_template('operator.html')
 
-"""
 @app.route('/finish')
 def finish_station():
     """Finish station page"""
@@ -265,8 +258,10 @@ def center_data():
         cursor = conn.cursor()
         """
         cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
-        """
+        
         cursor.execute('SELECT * FROM stations ORDER BY id')
+    """
+        cursor.execute('SELECT * FROM stations WHERE hidden = 0 ORDER BY id')
         stations = cursor.fetchall()
         
         result = []
@@ -297,18 +292,6 @@ def center_data():
             current_number = current['customer_number'] if current else None
             
             
-            """
-            if station['id'] == queue_station_id:
-                cursor.execute('''
-                    SELECT customer_number FROM queue_entries 
-                    WHERE station_id = ? AND status = 'called'
-                    LIMIT 1
-                ''', (queue_station_id,))
-                current = cursor.fetchone()
-                current_number = current['customer_number'] if current else None
-            else:
-                current_number = None  # תחנות אחרות בקבוצה - לא רואות 'called'
-            """
             # Get waiting customers
             cursor.execute('''
                 SELECT customer_number FROM queue_entries 
@@ -1103,6 +1086,72 @@ def admin_report():
         log_action('ADMIN REPORT ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/admin/toggle-station-visibility/<int:station_id>', methods=['POST'])
+def toggle_station_visibility(station_id):
+    """Toggle station visibility (hidden/shown)"""
+    data = request.json
+    password = data.get('password')
+    
+    with open('config.json', 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    
+    if password != config.get('admin_password'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT hidden, name FROM stations WHERE id = ?', (station_id,))
+        station = cursor.fetchone()
+        
+        if not station:
+            conn.close()
+            return jsonify({'error': 'Station not found'}), 404
+        
+        new_status = 1 - station['hidden']
+        cursor.execute('UPDATE stations SET hidden = ? WHERE id = ?', (new_status, station_id))
+        
+        conn.commit()
+        conn.close()
+        
+        status_text = 'מוסתר' if new_status else 'מוצג'
+        log_action('STATION VISIBILITY', f'Station {station["name"]} is now {status_text}')
+        
+        return jsonify({
+            'success': True,
+            'hidden': new_status,
+            'message': f'התחנה {station["name"]} כעת {status_text}'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/admin/stations')
+def admin_stations():
+    """Admin stations management screen"""
+    log_action('VIEW ACCESSED', 'Admin stations screen')
+    return render_template('admin_stations.html')
+
+@app.route('/api/admin/all-stations')
+def get_all_stations():
+    """Get all stations including hidden ones (for admin)"""
+    try:
+        log_action('VIEW ACCESSED111', 'Admin stations screen111')
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id, name, description, hidden, is_active FROM stations ORDER BY id')
+        stations = cursor.fetchall()
+        
+        result = [dict(station) for station in stations]
+        
+        conn.close()
+        return jsonify(result)
+    except Exception as e:
+        log_action('GET ALL STATIONS ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+    
+
 
 @app.route('/api/search-customer', methods=['GET'])
 def search_customer():
@@ -1140,36 +1189,7 @@ def search_customer():
 
 
 
-"""
-@app.route('/api/search-customer', methods=['GET'])
-def search_customer():
-    Search customer by number
-    customer_number = request.args.get('number')
-    
-    if not customer_number:
-        return jsonify({'error': 'Customer number required'}), 400
-    
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT qe.*, s.name as station_name
-            FROM queue_entries qe
-            JOIN stations s ON qe.station_id = s.id
-            WHERE qe.customer_number = ?
-            ORDER BY qe.created_at DESC
-        ''', (customer_number,))
-        
-        entries = cursor.fetchall()
-        result = [dict(entry) for entry in entries]
-        
-        conn.close()
-        return jsonify(result)
-    except Exception as e:
-        log_action('SEARCH CUSTOMER ERROR', str(e), 'ERROR')
-        return jsonify({'error': str(e)}), 500
-"""
+
 @app.route('/api/transfer-to-poked', methods=['POST'])
 def transfer_to_poked():
     data = request.json
@@ -1274,57 +1294,6 @@ def get_finished_list():
         log_action('FINISH LIST ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
-"""
-@app.route('/api/finish-station/release-customer', methods=['POST'])
-def release_customer():
-    
-    data = request.json
-    customer_number = data.get('customer_number')
-    operator_code = data.get('operator_code')
-    
-    if not customer_number or not operator_code:
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    try:
-        conn = get_db_connection()
-        with db_lock:
-            cursor = conn.cursor()
-            
-            cursor.execute('SELECT id FROM operators WHERE code = ?', (operator_code,))
-            if not cursor.fetchone():
-                conn.close()
-                return jsonify({'error': 'Operator not authorized'}), 401
-            
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET status = 'released', released_at = CURRENT_TIMESTAMP
-                WHERE customer_number = ? AND status = 'finished'
-            ''', (customer_number,))
-            
-            # אחרי UPDATE ל-released
-            cursor.execute('SELECT name FROM stations WHERE id = ?', (station_id,))
-            station = cursor.fetchone()
-            log_to_history(cursor, customer_number, station_id, station['name'], 'released', 'released')
-            
-            if cursor.rowcount == 0:
-                conn.close()
-                return jsonify({'error': 'Customer not found or not in finished status'}), 404
-            
-            conn.commit()
-            log_action('CUSTOMER RELEASED', f'Customer {customer_number} released')
-            
-            return jsonify({
-                'success': True,
-                'message': f'הלקוח {customer_number} שוחרר בהצלחה!'
-            }), 200
-    
-    except Exception as e:
-        conn.rollback()
-        log_action('RELEASE CUSTOMER ERROR', str(e), 'ERROR')
-        return jsonify({'error': str(e)}), 500
-    finally:
-        conn.close()
-"""
 @app.route('/api/finish-station/release-customer', methods=['POST'])
 def release_customer():
     """Release customer from FINISHED to RELEASED"""
