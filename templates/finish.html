@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>עמדת סיום - יום כיף</title>
+    <title>עמדת שיחרור - יום כיף</title>
     <style>
         * {
             margin: 0;
@@ -417,20 +417,20 @@ select:focus, input[type="number"]:focus {
 
     <div class="container">
         <div class="header">
-            <h1>✅ יום כיף - עמדת סיום</h1>
+            <h1>✅ יום מיצוי - עמדת שיחרור</h1>
             <p id="stationDisplay">טוען...</p>
         </div>
 
         <div class="main-card">
             <div class="station-info">
-                <div class="station-name">עמדת סיום וקבלה</div>
+                <div class="station-name">עמדת שיחרור </div>
                 <div class="operator-name" id="operatorName">עובד</div>
             </div>
 
             <div id="message" class="message"></div>
 
             <div class="display-section">
-                <div class="display-label">🔔 לקוח לאישור</div>
+                <div class="display-label">🔔 מועמד לאישור</div>
                 <div class="current-number" id="currentNumber">-</div>
             </div>
 
@@ -462,7 +462,7 @@ select:focus, input[type="number"]:focus {
 
 
             <div class="finished-list">
-                <h3>📋 לקוחות להשלמה:</h3>
+                <h3>📋 מועמד להשלמה:</h3>
                 <div id="finishedList"></div>
             </div>
 
@@ -544,7 +544,7 @@ async function loadFinishedCustomers() {
 function displayFinishCustomers(customers) {
     const listDiv = document.getElementById('finishedList');
     if (customers.length === 0) {
-        listDiv.innerHTML = '<p style="color: #666; text-align: center;">אין לקוחות בהמתנה להשלמה</p>';
+        listDiv.innerHTML = '<p style="color: #666; text-align: center;">אין מועמד בהמתנה להשלמה</p>';
         return;
     }
 
@@ -645,11 +645,11 @@ function displayHistory(history) {
  
         async function releaseCustomer() {
             if (!selectedCustomer) {
-                showMessage('⚠️ בחר לקוח קודם', 'error');
+                showMessage('⚠️ בחר מועמד קודם', 'error');
                 return;
             }
 
-            if (!confirm(`האם אתה בטוח שאתה רוצה לשחרר את הלקוח ${selectedCustomer}?`)) {
+            if (!confirm(`האם אתה בטוח שאתה רוצה לשחרר את המועמד ${selectedCustomer}?`)) {
                 return;
             }
 
@@ -681,7 +681,7 @@ function displayHistory(history) {
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showMessage('❌ שגיאה בשחרור הלקוח', 'error');
+                showMessage('❌ שגיאה בשחרור מועמד', 'error');
             } finally {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('releaseBtn').disabled = !selectedCustomer;
@@ -705,14 +705,14 @@ function displayHistory(history) {
             document.querySelector('.main-card').innerHTML = `
                 <div style="text-align: center;">
                     <div style="font-size: 48px; margin-bottom: 20px;">🔐</div>
-                    <h2 style="color: #2d3436; margin-bottom: 30px; font-size: 24px;">הזדהות עובד עמדת סיום</h2>
+                    <h2 style="color: #2d3436; margin-bottom: 30px; font-size: 24px;">הזדהות עובד עמדת שיחרור</h2>
                     
                     <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 30px; border-right: 3px solid #008B8B; color: #333; font-size: 14px;">
-                        📌 הקלד את קוד העובד שלך כדי להתחיל
+                        📌 הקלד את קוד המראיין שלך כדי להתחיל
                     </div>
                     
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 10px; text-align: right;">קוד עובד:</label>
+                        <label style="display: block; color: #333; font-weight: 600; margin-bottom: 10px; text-align: right;">קוד מראיין:</label>
                         <input type="password" id="operatorCode" placeholder="הקלד קוד" style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; text-align: center;" autofocus>
                     </div>
                     
@@ -729,7 +729,7 @@ function displayHistory(history) {
             const code = document.getElementById('operatorCode').value;
             
             if (!code) {
-                showLoginError('⚠️ הקלד קוד עובד');
+                showLoginError('⚠️ הקלד קוד מראיין');
                 return;
             }
             
@@ -750,7 +750,7 @@ function displayHistory(history) {
                 if (data.success) {
                     window.location.href = `/finish?code=${code}`;
                 } else {
-                    showLoginError('❌ קוד עובד לא תקין!');
+                    showLoginError('❌ קוד מראיין לא תקין!');
                 }
             } catch (error) {
                 console.error('Error:', error);
