@@ -414,7 +414,7 @@
     
     <div class="container">
         <div class="header">
-            <h1>🎮 יום כיף - עובד בתחנה</h1>
+            <h1>🎮 יום מיצוי - מראיין בתחנה</h1>
             <p id="stationDisplay">טוען...</p>
         </div>
 
@@ -427,24 +427,24 @@
             <div id="message" class="message"></div>
 
             <div class="display-section">
-                <div class="display-label">🔔 משחק כעת</div>
+                <div class="display-label">🔔 בראיון כעת</div>
                 <div class="current-number" id="currentNumber">-</div>
             </div>
 
             <div class="queue-info" id="queueInfo">
-                מספר במתינה: <strong id="waitingCount">0</strong>
+                מספר ממתינים: <strong id="waitingCount">0</strong>
             </div>
 
             
             <div class="buttons-group">
     <button class="btn-primary" id="callNextBtn" onclick="callNext()">
-        📢 קרא הבא
+        📢 קרא לבא
     </button>
     <button class="btn-secondary" onclick="openTransferModal()">
         ↔️ העברה לתור אחר
     </button>
     <button class="btn-release" onclick="finishCustomer()">
-        ✅ סיום ליום
+        ✅ העברה לשיחרור 
     </button>
     <button class="btn-toggle" id="toggleBtn" onclick="toggleStationStatus()">
         🟢 עמדה פעילה
@@ -493,6 +493,18 @@
         let stationId = null;
         let operatorCode = null;
         let currentCustomer = null;
+        let isCallInProgress = false;
+
+        function showMessage(text, type) {
+    const messageDiv = document.getElementById('message');
+    messageDiv.textContent = text;
+    messageDiv.className = `message ${type}`;
+    
+    // הסתר את ההודעה אחרי 4 שניות
+    setTimeout(() => {
+        messageDiv.className = 'message';
+    }, 4000);
+}
 
         // קבל את הקוד מה-URL
         function getOperatorCode() {
@@ -619,18 +631,85 @@ function getStationId() {
 
         // קרא את הבא
         
+//async function callNext() {
+//    if (!operatorCode) {
+//        showMessage('❌ לא נמצא קוד עובד', 'error');
+//        return;
+//    }
+
+//    document.getElementById('loading').style.display = 'block';
+  //  document.getElementById('callNextBtn').disabled = true;
+
+    //try {
+      //  const response = await fetch(`/api/call-next/${STATION_ID}`, {
+        //         method: 'POST',
+          //  headers: {
+            //    'Content-Type': 'application/json',
+            //},
+            //body: JSON.stringify({
+            //    operator_code: operatorCode
+          //  })
+        //});
+
+        //const data = await response.json();
+
+        //if (response.ok) {
+        //    showMessage(`✅ לקוח ${data.customer_number} נקרא`, 'success');
+        //    await updateDisplay();
+        //} else {
+          //  showMessage(`❌ ${data.error || 'לא יכול לקרוא הבא'}`, 'error');
+        //}
+    //} catch (error) {
+      //  console.error('Error:', error);
+        //showMessage('❌ שגיאה בקריאה', 'error');
+    //} finally {
+      //  document.getElementById('loading').style.display = 'none';
+       // document.getElementById('callNextBtn').disabled = false;
+    //}
+//}
+        // פתח modal להעברה
+  //      function openTransferModal() {
+    //        if (!currentCustomer) {
+      //          showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
+        //        return;
+          //  }
+
+            //document.getElementById('modalCustomerInfo').textContent = `העברת לקוח ${currentCustomer}`;
+            //document.getElementById('transferModal').classList.add('active');
+        //}
+
+        // סגור modal
+        //function closeTransferModal() {
+         //   document.getElementById('transferModal').classList.remove('active');
+        //}
+
+        // אישור העברה
 async function callNext() {
+    // בדיקה 1: האם יש מועמד בשירות כרגע
+    if (currentCustomer) {
+        showMessage(`⚠️ יש מועמד בשירות (${currentCustomer})! יש לסיים עם המועמד הנוכחי לפני קריאה לבא`, 'error');
+        return;
+    }
+
+    // בדיקה 2: האם כבר יש קריאה בתהליך
+    if (isCallInProgress) {
+        showMessage('⏳ אנא המתן, הקריאה בתהליך...', 'error');
+        return;
+    }
+
     if (!operatorCode) {
         showMessage('❌ לא נמצא קוד עובד', 'error');
         return;
     }
 
+    // נעילת הכפתור ומשתנה
+    isCallInProgress = true;
     document.getElementById('loading').style.display = 'block';
     document.getElementById('callNextBtn').disabled = true;
 
     try {
         const response = await fetch(`/api/call-next/${STATION_ID}`, {
-                 method: 'POST',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -653,25 +732,11 @@ async function callNext() {
     } finally {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('callNextBtn').disabled = false;
+        isCallInProgress = false;
     }
 }
-        // פתח modal להעברה
-        function openTransferModal() {
-            if (!currentCustomer) {
-                showMessage('⚠️ אין לקוח בשירות כרגע', 'error');
-                return;
-            }
 
-            document.getElementById('modalCustomerInfo').textContent = `העברת לקוח ${currentCustomer}`;
-            document.getElementById('transferModal').classList.add('active');
-        }
 
-        // סגור modal
-        function closeTransferModal() {
-            document.getElementById('transferModal').classList.remove('active');
-        }
-
-        // אישור העברה
        
        
 async function confirmTransfer() {

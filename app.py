@@ -1179,7 +1179,7 @@ def transfer_to_poked():
             cursor = conn.cursor()
             
             # Get Poked station
-            cursor.execute('SELECT id FROM stations WHERE name = ? LIMIT 1', ('פוקד',))
+            cursor.execute('SELECT id FROM stations WHERE name = ? LIMIT 1', ('פוקד 1',))
             poked_station = cursor.fetchone()
             
             if not poked_station:
