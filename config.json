@@ -200,18 +200,18 @@
     },
     {
       "id": 23,
-      "name": "990 1",
-      "description": "990",
-      "queue_group_id": "zy",
+      "name": "פיקוד העורף 1",
+      "description": "פיקוד  העורף",
+      "queue_group_id": "pikud",
       "hidden": 0,
       "restricted": 0,
       "is_routing": false
     },
     {
       "id": 24,
-      "name": "990 2",
-      "description": "990",
-      "queue_group_id": "zy",
+      "name": "פיקוד העורף 2",
+      "description": "פיקוד  העורף",
+      "queue_group_id": "pikud",
       "hidden": 0,
       "restricted": 0,
       "is_routing": false
@@ -368,7 +368,67 @@
       "hidden": 0,
       "restricted": 1,
       "is_routing": false
+    },
+{
+      "id": 42,
+      "name": "פוקד 3",
+      "description": "פוקד - תור מיוחד",
+      "queue_group_id": "poked",
+      "hidden": 0,
+      "restricted": 1,
+      "is_routing": false
+    },
+    {
+      "id": 43,
+      "name": "פוקד 4",
+      "description": "פוקד - תור מיוחד",
+      "queue_group_id": "poked",
+      "hidden": 0,
+      "restricted": 1,
+      "is_routing": false
+    },
+{
+      "id": 44,
+      "name": "פוקד 5",
+      "description": "פוקד - תור מיוחד",
+      "queue_group_id": "poked",
+      "hidden": 0,
+      "restricted": 1,
+      "is_routing": false
+    },
+    {
+      "id": 45,
+      "name": "פוקד 6",
+      "description": "פוקד - תור מיוחד",
+      "queue_group_id": "poked",
+      "hidden": 0,
+      "restricted": 1,
+      "is_routing": false
+    },
+{
+      "id": 46,
+      "name": "פוקד 7",
+      "description": "פוקד - תור מיוחד",
+      "queue_group_id": "poked",
+      "hidden": 0,
+      "restricted": 1,
+      "is_routing": false
+    },
+    {
+      "id": 47,
+      "name": "פוקד 8",
+      "description": "פוקד - תור מיוחד",
+      "queue_group_id": "poked",
+      "hidden": 0,
+      "restricted": 1,
+      "is_routing": false
     }
+
+
+
+
+
+
   ],
   "operators": [
     {
@@ -609,14 +669,54 @@
       "id": 40,
       "code": "56753",
       "station_id": 40,
-      "name": "Operator Poked 1"
+      "name": "Operator 40"
     },
     {
       "id": 41,
       "code": "88250",
       "station_id": 41,
+      "name": "Operator Poked 1"
+    },
+    {
+      "id": 42,
+      "code": "58353",
+      "station_id": 42,
       "name": "Operator Poked 2"
     },
+    {
+      "id": 43,
+      "code": "88403",
+      "station_id": 43,
+      "name": "Operator Poked 3"
+    },
+{
+      "id": 44,
+      "code": "13196",
+      "station_id": 44,
+      "name": "Operator Poked 4"
+    },
+    {
+      "id": 45,
+      "code": "92394",
+      "station_id": 45,
+      "name": "Operator Poked 5"
+    },
+    {
+      "id": 46,
+      "code": "56497",
+      "station_id": 46,
+      "name": "Operator Poked 6"
+    },
+    {
+      "id": 47,
+      "code": "43964",
+      "station_id": 47,
+      "name": "Operator Poked 7"
+    },
+
+
+
+
     {
       "id": 100,
       "code": "9999",
