@@ -510,13 +510,28 @@ def add_entry():
                         WHERE customer_number = ? AND station_id = ? AND status != 'completed'
                     ''', (customer_number, other_station_id))
                     log_action('CUSTOMER TRANSFERRED', f'Customer {customer_number} transferred')
-            
+            """
             # Add to queue station
             cursor.execute('''
                 INSERT INTO queue_entries (station_id, customer_number, status)
                 VALUES (?, ?, 'waiting')
             ''', (queue_station_id, customer_number))
-           
+           """
+            # Get max position in queue
+            cursor.execute('''
+                SELECT COALESCE(MAX(position), 0) as max_pos FROM queue_entries 
+                WHERE station_id = ? AND status = 'waiting'
+            ''', (queue_station_id,))
+            max_position = cursor.fetchone()['max_pos']
+
+            # Add to queue station at end
+            cursor.execute('''
+                INSERT INTO queue_entries (station_id, customer_number, status, position)
+                VALUES (?, ?, 'waiting', ?)
+            ''', (queue_station_id, customer_number, max_position + 1))
+
+
+
             # הוסף logging בחזרה
             cursor.execute('SELECT name FROM stations WHERE id = ?', (queue_station_id,))
             station_row = cursor.fetchone()
