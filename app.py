@@ -1219,7 +1219,7 @@ def transfer_to_poked():
             cursor = conn.cursor()
             
             # Get Poked station
-            cursor.execute('SELECT id FROM stations WHERE name = ? LIMIT 1', ('פוקד 1',))
+            cursor.execute('SELECT id FROM stations WHERE name = ? LIMIT 1', ('פוקד עמ 42',))
             poked_station = cursor.fetchone()
             
             if not poked_station:
@@ -1545,7 +1545,7 @@ def return_to_queue(station_id):
                 queue_station_id = cursor.fetchone()['id']
             else:
                 queue_station_id = station_id
-            
+            """
             # Get max position in queue
             cursor.execute('''
                 SELECT COALESCE(MAX(position), 0) as max_pos FROM queue_entries 
@@ -1559,7 +1559,26 @@ def return_to_queue(station_id):
                 SET status = 'waiting', station_id = ?, position = ?, called_at = NULL
                 WHERE id = ?
             ''', (queue_station_id, max_position + 1, entry['id']))
-            
+            """
+
+            # Set position to 6 (or end of queue if less than 6 waiting)
+            cursor.execute('''
+                SELECT COUNT(*) as count FROM queue_entries 
+                WHERE station_id = ? AND status = 'waiting'
+            ''', (queue_station_id,))
+            waiting_count = cursor.fetchone()['count']
+
+            # אם יש פחות מ-5 בתור, שים בסוף. אחרת שים במקום 6
+            new_position = 6 if waiting_count >= 5 else waiting_count + 1
+
+            # Update customer: change status back to waiting, set position to 6
+            cursor.execute('''
+                UPDATE queue_entries 
+                SET status = 'waiting', station_id = ?, position = ?, called_at = NULL
+                WHERE id = ?
+            ''', (queue_station_id, new_position, entry['id']))
+
+
             # Log to history
             cursor.execute('SELECT name FROM stations WHERE id = ?', (queue_station_id,))
             station_row = cursor.fetchone()
@@ -1584,6 +1603,146 @@ def return_to_queue(station_id):
         if conn:
             conn.close()
 
+@app.route('/api/station-queue/<int:station_id>')
+def get_station_queue(station_id):
+    """Get full queue list for a station"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get station info
+        cursor.execute('SELECT queue_group_id FROM stations WHERE id = ?', (station_id,))
+        station = cursor.fetchone()
+        
+        if not station:
+            conn.close()
+            return jsonify({'error': 'Station not found'}), 404
+        
+        # Determine which station to query
+        if station['queue_group_id']:
+            cursor.execute('''
+                SELECT id FROM stations 
+                WHERE queue_group_id = ?
+                LIMIT 1
+            ''', (station['queue_group_id'],))
+            queue_station_id = cursor.fetchone()['id']
+        else:
+            queue_station_id = station_id
+        
+        # Get ALL waiting customers
+        cursor.execute('''
+            SELECT customer_number, position, created_at
+            FROM queue_entries 
+            WHERE station_id = ? AND status = 'waiting'
+            ORDER BY position ASC, created_at ASC
+        ''', (queue_station_id,))
+        
+        entries = cursor.fetchall()
+        
+        result = []
+        for i, entry in enumerate(entries):
+            result.append({
+                'position': i + 1,
+                'customer_number': entry['customer_number'],
+                'created_at': entry['created_at']
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            'count': len(result),
+            'queue': result
+        })
+        
+    except Exception as e:
+        log_action('GET STATION QUEUE ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500  
+       
+@app.route('/api/restricted-stations')
+def get_restricted_stations():
+    """Get restricted stations (hidden=1 and restricted=1)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, name, description FROM stations 
+            WHERE hidden = 1 AND restricted = 1
+            ORDER BY id
+        ''')
+        
+        stations = cursor.fetchall()
+        result = [dict(station) for station in stations]
+        
+        conn.close()
+        return jsonify(result)
+    except Exception as e:
+        log_action('GET RESTRICTED STATIONS ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/operator-data/<int:station_id>')
+def operator_data(station_id):
+    """Get station data for operator screen - includes hidden/restricted stations"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get station info (including hidden/restricted)
+        cursor.execute('SELECT * FROM stations WHERE id = ?', (station_id,))
+        station = cursor.fetchone()
+        
+        if not station:
+            conn.close()
+            return jsonify({'error': 'Station not found'}), 404
+        
+        # Get queue station id
+        if station['queue_group_id']:
+            cursor.execute('''
+                SELECT id FROM stations 
+                WHERE queue_group_id = ?
+                LIMIT 1
+            ''', (station['queue_group_id'],))
+            queue_station_id = cursor.fetchone()['id']
+        else:
+            queue_station_id = station['id']
+        
+        # Get current customer (called)
+        cursor.execute('''
+            SELECT customer_number FROM queue_entries 
+            WHERE station_id = ? AND status = 'called'
+            LIMIT 1
+        ''', (station_id,))
+        current = cursor.fetchone()
+        current_number = current['customer_number'] if current else None
+        
+        # Get waiting list
+        cursor.execute('''
+            SELECT customer_number FROM queue_entries 
+            WHERE station_id = ? AND status = 'waiting'
+            ORDER BY position ASC, created_at ASC
+        ''', (queue_station_id,))
+        waiting = cursor.fetchall()
+        waiting_list = [row['customer_number'] for row in waiting]
+        
+        conn.close()
+        
+        return jsonify({
+            'id': station['id'],
+            'name': station['name'],
+            'description': station['description'],
+            'queue_group_id': station['queue_group_id'],
+            'is_active': station['is_active'],
+            'is_routing': station['is_routing'],
+            'hidden': station['hidden'],
+            'restricted': station['restricted'],
+            'current_number': current_number,
+            'waiting_list': waiting_list,
+            'waiting_count': len(waiting_list)
+        })
+        
+    except Exception as e:
+        log_action('OPERATOR DATA ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
 
 # =====================
 # INITIALIZATION

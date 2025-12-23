@@ -7,7 +7,7 @@
       "queue_group_id": "esh_hatam",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 2,
@@ -16,7 +16,7 @@
       "queue_group_id": "esh_hatam",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 3,
@@ -25,7 +25,7 @@
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 4,
@@ -34,7 +34,7 @@
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 5,
@@ -43,7 +43,7 @@
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 6,
@@ -52,97 +52,97 @@
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 7,
-      "name": "תקשוב עמ' 7",
-      "description": "תקשוב עמ",
+      "name": "תיקשוב עמ' 7",
+      "description": "תיקשוב עמ",
       "queue_group_id": "tikshuv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 8,
-      "name": "תקשוב עמ' 8",
-      "description": "תקשוב עמ",
+      "name": "תיקשוב עמ' 8",
+      "description": "תיקשוב עמ",
       "queue_group_id": "tikshuv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 9,
-      "name": "תקשוב עמ' 9",
-      "description": "תקשוב עמ",
+      "name": "תיקשוב עמ' 9",
+      "description": "תיקשוב עמ",
       "queue_group_id": "tikshuv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 10,
-      "name": "תקשוב עמ' 10",
-      "description": "תקשוב עמ",
+      "name": "תיקשוב עמ' 10",
+      "description": "תיקשוב עמ",
       "queue_group_id": "tikshuv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 11,
-      "name": "תקשוב עמ' 11",
-      "description": "תקשוב עמ",
+      "name": "תיקשוב עמ' 11",
+      "description": "תיקשוב עמ",
       "queue_group_id": "tikshuv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 12,
-      "name": "תקשוב עמ' 12",
-      "description": "תקשוב עמ",
+      "name": "תיקשוב עמ' 12",
+      "description": "תיקשוב עמ",
       "queue_group_id": "tikshuv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 13,
-      "name": "תקשוב עמ' 13",
-      "description": "תקשוב עמ",
+      "name": "תיקשוב עמ' 13",
+      "description": "תיקשוב עמ",
       "queue_group_id": "tikshuv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 14,
-      "name": "מודיעין עמ' 14",
-      "description": "מודיעין עמ",
-      "queue_group_id": "modin",
+      "name": "טנא עמ' 14",
+      "description": "טנא עמ",
+      "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 15,
-      "name": "מודיעין עמ' 15",
-      "description": "מודיעין עמ",
-      "queue_group_id": "modin",
+      "name": "אגם עמ' 15",
+      "description": "אגם עמ",
+      "queue_group_id": "agam",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 16,
-      "name": "מודיעין עמ' 16",
-      "description": "מודיעין עמ",
-      "queue_group_id": "modin",
+      "name": "אגם עמ' 16",
+      "description": "אגם עמ",
+      "queue_group_id": "agam",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 17,
@@ -151,124 +151,124 @@
       "queue_group_id": "modin",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 18,
-      "name": "הספקה עמ' 18",
+      "name": "מודיעין עמ' 18",
+      "description": "מודיעין עמ",
+      "queue_group_id": "modin",
+      "hidden": 0,
+      "restricted": 0,
+      "is_routing": 0
+    },
+    {
+      "id": 19,
+      "name": "מודיעין עמ' 19",
+      "description": "מודיעין עמ",
+      "queue_group_id": "modin",
+      "hidden": 0,
+      "restricted": 0,
+      "is_routing": 0
+    },
+    {
+      "id": 20,
+      "name": "מודיעין עמ' 20",
+      "description": "מודיעין עמ",
+      "queue_group_id": "modin",
+      "hidden": 0,
+      "restricted": 0,
+      "is_routing": 0
+    },
+    {
+      "id": 21,
+      "name": "הספקה עמ' 21",
       "description": "הספקה עמ",
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
-      "id": 19,
-      "name": "טנא עמ' 19",
-      "description": "טנא עמ",
-      "queue_group_id": "tana",
-      "hidden": 0,
-      "restricted": 0,
-      "is_routing": false
-    },
-    {
-      "id": 20,
-      "name": "רפואה עמ' 20",
+      "id": 22,
+      "name": "רפואה עמ' 22",
       "description": "רפואה עמ",
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
-      "id": 21,
-      "name": "משאן עמ' 21",
+      "id": 23,
+      "name": "משאן עמ' 23",
       "description": "משאן עמ",
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
-    },
-    {
-      "id": 22,
-      "name": "מנהלה עמ' 22",
-      "description": "מנהלה עמ",
-      "queue_group_id": "minhala",
-      "hidden": 0,
-      "restricted": 0,
-      "is_routing": false
-    },
-    {
-      "id": 23,
-      "name": "אגם עמ' 23",
-      "description": "אגם עמ",
-      "queue_group_id": "agam",
-      "hidden": 0,
-      "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 24,
-      "name": "אגם עמ' 24",
-      "description": "אגם עמ",
-      "queue_group_id": "agam",
+      "name": "מנהלה עמ' 24",
+      "description": "מנהלה עמ",
+      "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 25,
-      "name": "אוגדה 96 עמ' 25",
-      "description": "אוגדה 96 עמ",
-      "queue_group_id": "og",
+      "name": "אטל+חטל עמ' 25",
+      "description": "אטל+חטל עמ",
+      "queue_group_id": "atal",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 26,
-      "name": "אוגדה 96 עמ' 26",
-      "description": "אוגדה 96 עמ",
-      "queue_group_id": "og",
+      "name": "אטל+חטל עמ' 26",
+      "description": "אטל+חטל עמ",
+      "queue_group_id": "atal",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 27,
-      "name": "אוגדה 96 עמ' 27",
-      "description": "אוגדה 96 עמ",
-      "queue_group_id": "og",
+      "name": "פיקוד העורף עמ' 27",
+      "description": "פיקוד העורף עמ",
+      "queue_group_id": "pikud",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 28,
-      "name": "אוגדה 96 עמ' 28",
-      "description": "אוגדה 96 עמ",
-      "queue_group_id": "og",
+      "name": "פיקוד העורף עמ' 28",
+      "description": "פיקוד העורף עמ",
+      "queue_group_id": "pikud",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 29,
-      "name": "אוגדה 96 עמ' 29",
-      "description": "אוגדה 96 עמ",
-      "queue_group_id": "og",
+      "name": "אוגדה 146 עמ' 29",
+      "description": "אוגדה 146 עמ",
+      "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 30,
-      "name": "אוגדה 96 עמ' 30",
-      "description": "אוגדה 96 עמ",
-      "queue_group_id": "og",
+      "name": "אוגדה 252 עמ' 30",
+      "description": "אוגדה 252 עמ",
+      "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 31,
@@ -277,7 +277,7 @@
       "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 32,
@@ -286,73 +286,70 @@
       "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 33,
-      "name": "אוגדה 146 עמ' 33",
-      "description": "אוגדה 146 עמ",
-      "queue_group_id": null,
+      "name": "אוגדה 96 עמ' 33",
+      "description": "אוגדה 96 עמ",
+      "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 34,
-      "name": "אוגדה 252 עמ' 34",
-      "description": "אוגדה 252 עמ",
-      "queue_group_id": null,
+      "name": "אוגדה 96 עמ' 34",
+      "description": "אוגדה 96 עמ",
+      "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 35,
-      "name": "אטל עמ' 35",
-      "description": "אטל עמ",
-      "queue_group_id": "atal",
+      "name": "אוגדה 96 עמ' 35",
+      "description": "אוגדה 96 עמ",
+      "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 36,
-      "name": "אטל עמ' 36",
-      "description": "אטל עמ",
-      "queue_group_id": "atal",
+      "name": "אוגדה 96 עמ' 36",
+      "description": "אוגדה 96 עמ",
+      "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 37,
-      "name": "חטל עמ' 37",
-      "description": "חטל עמ",
-      "queue_group_id": null,
+      "name": "אוגדה 96 עמ' 37",
+      "description": "אוגדה 96 עמ",
+      "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
-
-
-
     {
       "id": 38,
-      "name": "פיקוד העורף עמ' 38",
-      "description": "פיקוד העורף עמ",
-      "queue_group_id": "pikud",
+      "name": "אוגדה 96 עמ' 38",
+      "description": "אוגדה 96 עמ",
+      "queue_group_id": "og",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 39,
-      "name": "פיקוד העורף עמ' 39",
-      "description": "פיקוד העורף עמ",
-      "queue_group_id": "pikud",
+      "name": "רופא עמ' 39",
+      "description": "רופא עמ",
+      "queue_group_id": "rofe",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 40,
@@ -361,25 +358,25 @@
       "queue_group_id": "rofe",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 41,
-      "name": "רופא עמ' 41",
-      "description": "רופא עמ",
-      "queue_group_id": "rofe",
-      "hidden": 0,
-      "restricted": 0,
-      "is_routing": false
-    },
-    {
-      "id": 42,
-      "name": "קבן עמ' 42",
+      "name": "קבן עמ' 41",
       "description": "קבן עמ",
       "queue_group_id": null,
       "hidden": 0,
       "restricted": 0,
-      "is_routing": false
+      "is_routing": 0
+    },
+    {
+      "id": 42,
+      "name": "פוקד עמ 42",
+      "description": "פוקד עמ",
+      "queue_group_id": "poked",
+      "hidden": 0,
+      "restricted": 1,
+      "is_routing": 0
     },
     {
       "id": 43,
@@ -388,7 +385,7 @@
       "queue_group_id": "poked",
       "hidden": 0,
       "restricted": 1,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 44,
@@ -397,7 +394,7 @@
       "queue_group_id": "poked",
       "hidden": 0,
       "restricted": 1,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 45,
@@ -406,7 +403,7 @@
       "queue_group_id": "poked",
       "hidden": 0,
       "restricted": 1,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 46,
@@ -415,7 +412,7 @@
       "queue_group_id": "poked",
       "hidden": 0,
       "restricted": 1,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 47,
@@ -424,7 +421,7 @@
       "queue_group_id": "poked",
       "hidden": 0,
       "restricted": 1,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 48,
@@ -433,7 +430,7 @@
       "queue_group_id": "poked",
       "hidden": 0,
       "restricted": 1,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 49,
@@ -442,35 +439,64 @@
       "queue_group_id": "poked",
       "hidden": 0,
       "restricted": 1,
-      "is_routing": false
+      "is_routing": 0
     },
     {
       "id": 50,
-      "name": "פוקד עמ' 50",
-      "description": "פוקד עמ",
-      "queue_group_id": "poked",
+      "name": "ניתוב 1",
+      "description": "ניתוב 1",
+      "queue_group_id": "nituv",
       "hidden": 0,
-      "restricted": 1,
-      "is_routing": false
+      "restricted": 0,
+      "is_routing": 1
     },
     {
       "id": 51,
-      "name": "ניתוב 1",
-      "description": "ניתוב",
+      "name": "ניתוב 2",
+      "description": "ניתוב 2",
       "queue_group_id": "nituv",
       "hidden": 0,
       "restricted": 0,
-      "is_routing": true
+      "is_routing": 1
     },
     {
       "id": 52,
-      "name": "ניתוב 2",
-      "description": "ניתוב",
-      "queue_group_id": "nituv",
-      "hidden": 0,
-      "restricted": 0,
-      "is_routing": true
+      "name": "אוגדה 96 טנא",
+      "description": "אוגדה 96 טנא ",
+      "queue_group_id": null,
+      "hidden": 1,
+      "restricted": 1,
+      "is_routing": 0
+    },
+{
+      "id": 53,
+      "name": "אוגדה 96 מודיעין",
+      "description": "אוגדה 96 מודיעין ",
+      "queue_group_id": null,
+      "hidden": 1,
+      "restricted": 1,
+      "is_routing": 0
+    },
+{
+      "id": 54,
+      "name": "אוגדה 96 תקשוב",
+      "description": "אוגדה 96 תקשוב ",
+      "queue_group_id": null,
+      "hidden": 1,
+      "restricted": 1,
+      "is_routing": 0
+    },
+{
+      "id": 55,
+      "name": "אוגדה 96 רפואה",
+      "description": "אוגדה 96 רפואה ",
+      "queue_group_id": null,
+      "hidden": 1,
+      "restricted": 1,
+      "is_routing": 0
     }
+
+
   ],
   "operators": [
     {
@@ -717,83 +743,106 @@
       "id": 41,
       "code": "88250",
       "station_id": 41,
-      "name": "Operator Poked 1"
+      "name": "Operator 41"
     },
     {
       "id": 42,
       "code": "58353",
       "station_id": 42,
-      "name": "Operator Poked 2"
+      "name": "Operator 42"
     },
     {
       "id": 43,
       "code": "88403",
       "station_id": 43,
-      "name": "Operator Poked 3"
+      "name": "Operator 43"
     },
     {
       "id": 44,
       "code": "13196",
       "station_id": 44,
-      "name": "Operator Poked 4"
+      "name": "Operator 44"
     },
     {
       "id": 45,
       "code": "92394",
       "station_id": 45,
-      "name": "Operator Poked 5"
+      "name": "Operator 45"
     },
     {
       "id": 46,
       "code": "56497",
       "station_id": 46,
-      "name": "Operator Poked 6"
+      "name": "Operator 46"
     },
     {
       "id": 47,
       "code": "43964",
       "station_id": 47,
-      "name": "Operator Poked 7"
+      "name": "Operator 47"
     },
+    {
+      "id": 48,
+      "code": "49397",
+      "station_id": 48,
+      "name": "Operator 48"
+    },
+    {
+      "id": 49,
+      "code": "93213",
+      "station_id": 49,
+      "name": "Operator 49"
+    },
+    {
+      "id": 50,
+      "code": "91038",
+      "station_id": 50,
+      "name": "Operator 50"
+    },
+    {
+      "id": 51,
+      "code": "23833",
+      "station_id": 51,
+      "name": "Operator 51"
+    },
+{
+      "id": 52,
+      "code": "49797",
+      "station_id": 52,
+      "name": "Operator 52"
+    },
+    {
+      "id": 53,
+      "code": "93713",
+      "station_id": 53,
+      "name": "Operator 53"
+    },
+    {
+      "id": 54,
+      "code": "91738",
+      "station_id": 54,
+      "name": "Operator 54"
+    },
+    {
+      "id": 55,
+      "code": "23733",
+      "station_id": 55,
+      "name": "Operator 55"
+    },
+
+
+
+
+
     {
       "id": 100,
       "code": "9999",
       "station_id": null,
       "name": "עובד סיום",
       "finish_operator": 1
-    },
-    {
-      "id": 48,
-      "code": "49397",
-      "station_id": 48,
-      "name": "Operator Poked 8"
-    },
-    {
-      "id": 49,
-      "code": "93213",
-      "station_id": 49,
-      "name": "Operator Poked 9"
-    },
-    {
-      "id": 50,
-      "code": "91038",
-      "station_id": 50,
-      "name": "Operator Poked 10"
-    },
-    {
-      "id": 51,
-      "code": "23833",
-      "station_id": 51,
-      "name": "Operator Poked 9"
-    },
-    {
-      "id": 52,
-      "code": "33038",
-      "station_id": 52,
-      "name": "Operator Poked 10"
     }
   ],
-  "admin_password": "udi12345",
+  "admin_password": "agam2156",
   "status_password": "status123",
   "center3": {
     "rotation_interval_seconds": 12

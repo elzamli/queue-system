@@ -466,6 +466,7 @@
         🟢 עמדה פעילה
     </button>
     <button class="btn-return" onclick="returnToQueue()">🔄 לא הגיע - החזר לתור</button>
+    <button class="btn-secondary" onclick="openQueueModal()" style="background: #17a2b8;">📋 הצג תור</button>
 </div>
 
             <div class="loading" id="loading">
@@ -565,6 +566,10 @@ function getStationId() {
         // טוען מידע התחנה
         async function loadStationInfo() {
             try {
+                //const response = await fetch('/api/center-data');
+                //const stations = await response.json();
+                //const station = stations.find(s => s.id == stationId);
+
                 const response = await fetch('/api/center-data');
                 const stations = await response.json();
                 const station = stations.find(s => s.id == stationId);
@@ -591,6 +596,19 @@ function getStationId() {
                         searchBtn.style.background = '#003366';  // כחול כהה
                         //buttonsGroup.insertBefore(searchBtn, document.querySelector('.btn-release'));
                         buttonsGroup.appendChild(searchBtn);
+                    } else if (station.queue_group_id === 'og') {
+                    // תחנות 96 - הוסף רק כפתור העברה לתחנות מוגבלות
+                    const buttonsGroup = document.querySelector('.buttons-group');
+                    
+                    const transferRestrictedBtn = document.createElement('button');
+                    transferRestrictedBtn.className = 'btn-poked';
+                    transferRestrictedBtn.textContent = '📋 העברה לעמדות האוגדה';
+                    transferRestrictedBtn.onclick = openRestrictedTransferModal;
+                    buttonsGroup.appendChild(transferRestrictedBtn);
+
+                   
+
+
 
                     } else {
                         console.log('❌ NOT ROUTING - נכנס לפה!');
@@ -623,9 +641,14 @@ function getStationId() {
         // עדכון מסך התצוגה
         async function updateDisplay() {
             try {
-                const response = await fetch('/api/center-data');
-                const stations = await response.json();
-                const station = stations.find(s => s.id == stationId);
+               // const response = await fetch('/api/center-data');
+               //const stations = await response.json();
+
+                const response = await fetch(`/api/operator-data/${STATION_ID}`);
+                const station = await response.json();
+                //const station = stations.find(s => s.id == stationId);
+
+             
 
                 if (station) {
                     // עדכן את המספר הנוכחי
@@ -1219,8 +1242,148 @@ async function returnToQueue() {
         showMessage('❌ שגיאה בהחזרה לתור', 'error');
     }
 }
+function openQueueModal() {
+    document.getElementById('queueModal').classList.add('active');
+    loadQueueList();
+}
+
+function closeQueueModal() {
+    document.getElementById('queueModal').classList.remove('active');
+}
+async function loadQueueList() {
+    const queueList = document.getElementById('queueList');
+    const queueInfo = document.getElementById('queueModalInfo');
+    
+    queueList.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">טוען...</div>';
+    
+    try {
+        const response = await fetch(`/api/station-queue/${STATION_ID}`);
+        const data = await response.json();
+        
+        if (!response.ok || !data.queue || data.queue.length === 0) {
+            queueInfo.textContent = 'אין ממתינים בתור';
+            queueList.innerHTML = '<div style="text-align: center; padding: 30px; color: #999;">🎉 התור ריק!</div>';
+            return;
+        }
+        
+        queueInfo.textContent = `${data.count} ממתינים בתור`;
+        
+        queueList.innerHTML = data.queue.map((item, index) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: ${index === 0 ? '#e8f5e9' : '#f9f9f9'}; margin-bottom: 8px; border-radius: 8px; border-right: 4px solid ${index === 0 ? '#4CAF50' : '#556B2F'};">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="background: #556B2F; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${item.position}</span>
+                    <span style="font-size: 18px; font-weight: 600; color: #2d3436;">${item.customer_number}</span>
+                </div>
+                <span style="font-size: 12px; color: #666;">${index === 0 ? '🔜 הבא בתור' : ''}</span>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        queueList.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">❌ שגיאה בטעינה</div>';
+    }
+}
 
 
+
+
+
+
+
+// סגור modal בלחיצה על הרקע
+document.addEventListener('click', (e) => {
+    const queueModal = document.getElementById('queueModal');
+    if (e.target === queueModal) {
+        closeQueueModal();
+    }
+});
+// ============================================
+// העברה לתחנות מוגבלות (פוקד)
+// ============================================
+
+async function openRestrictedTransferModal() {
+    if (!currentCustomer) {
+        showMessage('⚠️ אין מועמד בשירות כרגע', 'error');
+        return;
+    }
+    
+    document.getElementById('restrictedModalInfo').textContent = `העברת מועמד ${currentCustomer} לתחנה פנימית`;
+    document.getElementById('restrictedTransferModal').classList.add('active');
+    
+    // טען את התחנות המוגבלות
+    await loadRestrictedStations();
+}
+
+function closeRestrictedTransferModal() {
+    document.getElementById('restrictedTransferModal').classList.remove('active');
+}
+
+async function loadRestrictedStations() {
+    try {
+        const response = await fetch('/api/restricted-stations');
+        const stations = await response.json();
+        
+        const select = document.getElementById('restrictedStation');
+        select.innerHTML = stations.map(s => 
+            `<option value="${s.id}">${s.name}</option>`
+        ).join('');
+    } catch (error) {
+        console.error('Error loading restricted stations:', error);
+    }
+}
+
+async function confirmRestrictedTransfer() {
+    if (!currentCustomer) {
+        showMessage('❌ אין מועמד בשירות', 'error');
+        return;
+    }
+
+    const targetStationId = document.getElementById('restrictedStation').value;
+    if (!targetStationId) {
+        showMessage('❌ בחר תחנה', 'error');
+        return;
+    }
+
+    document.getElementById('restrictedTransferLoading').style.display = 'block';
+
+    try {
+        const response = await fetch('/api/add-entry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                station_id: parseInt(targetStationId),
+                customer_number: currentCustomer,
+                transfer: true
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            closeRestrictedTransferModal();
+            showMessage(`✅ מועמד ${currentCustomer} הועבר לתחנה פנימית בהצלחה!`, 'success');
+            currentCustomer = null;
+            await updateDisplay();
+        } else {
+            showMessage(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ שגיאה בהעברה', 'error');
+    } finally {
+        document.getElementById('restrictedTransferLoading').style.display = 'none';
+    }
+}
+
+// סגור modal בלחיצה על הרקע
+document.addEventListener('click', (e) => {
+    const restrictedModal = document.getElementById('restrictedTransferModal');
+    if (e.target === restrictedModal) {
+        closeRestrictedTransferModal();
+    }
+});
 
     </script>
 
@@ -1260,8 +1423,55 @@ async function returnToQueue() {
         </div>
     </div>
 </div>
+<!-- Queue List Modal -->
+<div id="queueModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>📋 רשימת ממתינים בתור</h2>
+            <p id="queueModalInfo">טוען...</p>
+        </div>
 
+        <div id="queueList" style="max-height: 400px; overflow-y: auto; margin: 15px 0;">
+            <!-- Queue items will be inserted here -->
+        </div>
 
+        <div class="modal-buttons" style="grid-template-columns: 1fr;">
+            <button class="modal-btn modal-btn-cancel" onclick="closeQueueModal()">
+                ❌ סגור
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Restricted Transfer Modal -->
+<div id="restrictedTransferModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🔴 העברה לעמדות האוגדה</h2>
+            <p id="restrictedModalInfo">בחר תחנה פנימית להעברה</p>
+        </div>
+
+        <div class="form-group">
+            <label for="restrictedStation">בחר תחנה:</label>
+            <select id="restrictedStation">
+                <option value="">טוען תחנות...</option>
+            </select>
+        </div>
+
+        <div class="loading" id="restrictedTransferLoading">
+            <div class="spinner"></div>
+            <p>מעביר...</p>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-submit" onclick="confirmRestrictedTransfer()">
+                ✅ העבר
+            </button>
+            <button class="modal-btn modal-btn-cancel" onclick="closeRestrictedTransferModal()">
+                ❌ ביטול
+            </button>
+        </div>
+    </div>
+</div>
 
 
 
