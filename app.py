@@ -1409,6 +1409,181 @@ def get_center3_config():
         return jsonify({'rotation_interval_seconds': rotation_interval})
     except:
         return jsonify({'rotation_interval_seconds': 15})    
+    
+
+@app.route('/check-status')
+def check_status():
+    """Customer status check screen"""
+    log_action('VIEW ACCESSED', 'Check status screen')
+    return render_template('check_status.html')
+
+@app.route('/api/status-verify', methods=['POST'])
+def status_verify():
+    """Verify status page password"""
+    data = request.json
+    password = data.get('password')
+    
+    try:
+        with open('config.json', 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        if password == config.get('status_password'):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'error': 'Wrong password'}), 401
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/api/check-customer-status/<int:customer_number>')
+def check_customer_status(customer_number):
+    """Check customer position in queue"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT qe.*, s.name as station_name, s.queue_group_id
+            FROM queue_entries qe
+            JOIN stations s ON qe.station_id = s.id
+            WHERE qe.customer_number = ? AND qe.status IN ('waiting', 'called')
+            LIMIT 1
+        ''', (customer_number,))
+        
+        entry = cursor.fetchone()
+        
+        if not entry:
+            conn.close()
+            return jsonify({'found': False})
+        
+        position = 0
+        if entry['status'] == 'waiting':
+            station_id = entry['station_id']
+            queue_group_id = entry['queue_group_id']
+            
+            if queue_group_id:
+                cursor.execute('''
+                    SELECT COUNT(*) as pos FROM queue_entries qe
+                    JOIN stations s ON qe.station_id = s.id
+                    WHERE s.queue_group_id = ?
+                    AND qe.status = 'waiting'
+                    AND (qe.position < ? OR (qe.position = ? AND qe.created_at < ?))
+                ''', (queue_group_id, entry['position'], entry['position'], entry['created_at']))
+            else:
+                cursor.execute('''
+                    SELECT COUNT(*) as pos FROM queue_entries
+                    WHERE station_id = ?
+                    AND status = 'waiting'
+                    AND (position < ? OR (position = ? AND created_at < ?))
+                ''', (station_id, entry['position'], entry['position'], entry['created_at']))
+            
+            position = cursor.fetchone()['pos'] + 1
+        
+        conn.close()
+        
+        return jsonify({
+            'found': True,
+            'customer_number': customer_number,
+            'station_name': entry['station_name'],
+            'status': entry['status'],
+            'position': position
+        })
+        
+    except Exception as e:
+        log_action('CHECK STATUS ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/return-to-queue/<int:station_id>', methods=['POST'])
+def return_to_queue(station_id):
+    """Return current customer to end of queue"""
+    data = request.json
+    operator_code = data.get('operator_code')
+    conn = None
+    
+    if not operator_code:
+        return jsonify({'error': 'Operator code missing'}), 400
+    
+    try:
+        with db_lock:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            # Verify operator
+            cursor.execute('''
+                SELECT id FROM operators 
+                WHERE code = ? AND station_id = ?
+            ''', (operator_code, station_id))
+            
+            if not cursor.fetchone():
+                return jsonify({'error': 'Operator not authorized'}), 401
+            
+            # Get current called customer
+            cursor.execute('''
+                SELECT id, customer_number, station_id FROM queue_entries 
+                WHERE station_id = ? AND status = 'called'
+                LIMIT 1
+            ''', (station_id,))
+            
+            entry = cursor.fetchone()
+            
+            if not entry:
+                return jsonify({'error': 'No customer currently called'}), 404
+            
+            customer_number = entry['customer_number']
+            
+            # Get station info for queue_group
+            cursor.execute('SELECT queue_group_id FROM stations WHERE id = ?', (station_id,))
+            station = cursor.fetchone()
+            
+            # Determine which station to return to
+            if station['queue_group_id']:
+                cursor.execute('''
+                    SELECT id FROM stations 
+                    WHERE queue_group_id = ?
+                    LIMIT 1
+                ''', (station['queue_group_id'],))
+                queue_station_id = cursor.fetchone()['id']
+            else:
+                queue_station_id = station_id
+            
+            # Get max position in queue
+            cursor.execute('''
+                SELECT COALESCE(MAX(position), 0) as max_pos FROM queue_entries 
+                WHERE station_id = ? AND status = 'waiting'
+            ''', (queue_station_id,))
+            max_position = cursor.fetchone()['max_pos']
+            
+            # Update customer: change status back to waiting, set position to end
+            cursor.execute('''
+                UPDATE queue_entries 
+                SET status = 'waiting', station_id = ?, position = ?, called_at = NULL
+                WHERE id = ?
+            ''', (queue_station_id, max_position + 1, entry['id']))
+            
+            # Log to history
+            cursor.execute('SELECT name FROM stations WHERE id = ?', (queue_station_id,))
+            station_row = cursor.fetchone()
+            if station_row:
+                log_to_history(cursor, customer_number, queue_station_id, station_row['name'], 'waiting', 'returned_to_queue')
+            
+            conn.commit()
+            log_action('CUSTOMER RETURNED TO QUEUE', f'Customer {customer_number} returned to end of queue')
+            
+            return jsonify({
+                'success': True,
+                'customer_number': customer_number,
+                'message': f'המועמד {customer_number} הוחזר לסוף התור'
+            })
+    
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        log_action('RETURN TO QUEUE ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
 
 # =====================
 # INITIALIZATION

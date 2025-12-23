@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בדיקת מיקום בתור - יום מיצוי</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #2d3436;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        input[type="number"],
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #556B2F;
+            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #556B2F;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #6B8E23;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-logout {
+            background: #ccc;
+            color: #333;
+            margin-top: 15px;
+        }
+
+        .btn-logout:hover {
+            background: #bbb;
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #556B2F;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 25px;
+            padding: 25px;
+            border-radius: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .result.found {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 2px solid #28a745;
+            display: block;
+        }
+
+        .result.not-found {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            border: 2px solid #ffc107;
+            display: block;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 2px solid #dc3545;
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .result-icon {
+            font-size: 32px;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3436;
+        }
+
+        .result-details {
+            display: grid;
+            gap: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3436;
+        }
+
+        .detail-value.highlight {
+            color: #556B2F;
+            font-size: 24px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-called {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-finished {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .btn-clear {
+            width: 100%;
+            padding: 12px;
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .info-box {
+            background: #f0f8ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-right: 3px solid #556B2F;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .login-screen {
+            display: block;
+        }
+
+        .main-screen {
+            display: none;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            input {
+                font-size: 16px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- מסך התחברות -->
+        <div class="card login-screen" id="loginScreen">
+            <div class="header">
+                <h1>🔐 בדיקת מיקום בתור</h1>
+                <p>הקלד סיסמה להתחברות</p>
+            </div>
+
+            <div id="loginMessage" class="message"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="password">סיסמה:</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        placeholder="הקלד סיסמה"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+
+                <button type="submit" class="btn">כניסה</button>
+            </form>
+        </div>
+
+        <!-- מסך ראשי -->
+        <div class="card main-screen" id="mainScreen">
+            <div class="header">
+                <h1>🔍 בדיקת מיקום בתור</h1>
+                <p>הקלד מספר סידורי לבדיקת הסטטוס</p>
+            </div>
+
+            <div class="info-box">
+                📌 הקלד את המספר הסידורי כדי לראות באיזה תור הוא ומה המיקום שלו
+            </div>
+
+            <form id="checkForm">
+                <div class="form-group">
+                    <label for="customerNumber">מספר סידורי:</label>
+                    <input 
+                        type="number" 
+                        id="customerNumber" 
+                        placeholder="הקלד מספר סידורי"
+                        min="1"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+
+                <button type="submit" class="btn" id="checkBtn">🔎 בדוק מיקום</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>בודק...</p>
+            </div>
+
+            <div class="result" id="result">
+                <!-- Results will be inserted here -->
+            </div>
+
+            <button class="btn-clear" id="clearBtn" style="display: none;" onclick="clearResults()">🔄 בדיקה חדשה</button>
+            
+            <button class="btn btn-logout" onclick="logout()">🚪 יציאה</button>
+        </div>
+    </div>
+
+    <script>
+        let sessionPassword = '';
+
+        // Login Form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('loginMessage');
+
+            try {
+                const response = await fetch('/api/status-verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    sessionPassword = password;
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainScreen').style.display = 'block';
+                    document.getElementById('customerNumber').focus();
+                } else {
+                    messageDiv.textContent = '❌ סיסמה שגויה';
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                messageDiv.textContent = '❌ שגיאה בהתחברות';
+                messageDiv.className = 'message error';
+            }
+        });
+
+        // Check Form
+        document.getElementById('checkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const customerNumber = document.getElementById('customerNumber').value;
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const checkBtn = document.getElementById('checkBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            if (!customerNumber) {
+                return;
+            }
+
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            result.className = 'result';
+            checkBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/check-customer-status/${customerNumber}`);
+                const data = await response.json();
+
+                loading.style.display = 'none';
+                checkBtn.disabled = false;
+
+                if (response.ok && data.found) {
+                    result.className = 'result found';
+                    
+                    let statusText = '';
+                    let statusClass = '';
+                    
+                    switch(data.status) {
+                        case 'waiting':
+                            statusText = 'ממתין בתור';
+                            statusClass = 'status-waiting';
+                            break;
+                        case 'called':
+                            statusText = 'בשירות כעת';
+                            statusClass = 'status-called';
+                            break;
+                        case 'finished':
+                            statusText = 'סיים';
+                            statusClass = 'status-finished';
+                            break;
+                        default:
+                            statusText = data.status;
+                            statusClass = 'status-waiting';
+                    }
+
+                    let positionHtml = '';
+                    if (data.status === 'waiting') {
+                        positionHtml = `
+                            <div class="detail-row">
+                                <span class="detail-label">מיקום בתור:</span>
+                                <span class="detail-value highlight">${data.position}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">לפניו בתור:</span>
+                                <span class="detail-value">${data.position - 1} אנשים</span>
+                            </div>
+                        `;
+                    } else if (data.status === 'called') {
+                        positionHtml = `
+                            <div class="detail-row">
+                                <span class="detail-label">📢</span>
+                                <span class="detail-value highlight">תורו הגיע!</span>
+                            </div>
+                        `;
+                    }
+
+                    result.innerHTML = `
+                        <div class="result-header">
+                            <span class="result-icon">✅</span>
+                            <span class="result-title">מספר ${customerNumber}</span>
+                        </div>
+                        <div class="result-details">
+                            <div class="detail-row">
+                                <span class="detail-label">תחנה:</span>
+                                <span class="detail-value">${data.station_name}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">סטטוס:</span>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            ${positionHtml}
+                        </div>
+                    `;
+                } else {
+                    result.className = 'result not-found';
+                    result.innerHTML = `
+                        <div class="result-header">
+                            <span class="result-icon">⚠️</span>
+                            <span class="result-title">לא נמצא</span>
+                        </div>
+                        <p style="color: #856404; font-size: 14px;">
+                            המספר הסידורי ${customerNumber} לא נמצא בתור כרגע.
+                            <br><br>
+                            ייתכן שעדיין לא נרשם או שכבר סיים.
+                        </p>
+                    `;
+                }
+
+                result.style.display = 'block';
+                clearBtn.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                loading.style.display = 'none';
+                checkBtn.disabled = false;
+                
+                result.className = 'result error';
+                result.innerHTML = `
+                    <div class="result-header">
+                        <span class="result-icon">❌</span>
+                        <span class="result-title">שגיאה</span>
+                    </div>
+                    <p style="color: #721c24; font-size: 14px;">
+                        אירעה שגיאה בבדיקה. נסה שוב.
+                    </p>
+                `;
+                result.style.display = 'block';
+                clearBtn.style.display = 'block';
+            }
+        });
+
+        function clearResults() {
+            document.getElementById('customerNumber').value = '';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('result').className = 'result';
+            document.getElementById('clearBtn').style.display = 'none';
+            document.getElementById('customerNumber').focus();
+        }
+
+        function logout() {
+            sessionPassword = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginMessage').className = 'message';
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+            clearResults();
+        }
+
+        // Auto-focus on password input
+        document.getElementById('password').focus();
+    </script>
+</body>
+</html>

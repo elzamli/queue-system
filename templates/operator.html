@@ -399,6 +399,22 @@
     transform: translateY(-2px);
 }
 
+.btn-return {
+    background: #FF8C00;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-return:hover {
+    background: #e67e00;
+}
+
     </style>
 </head>
 <body>
@@ -449,6 +465,7 @@
     <button class="btn-toggle" id="toggleBtn" onclick="toggleStationStatus()">
         🟢 עמדה פעילה
     </button>
+    <button class="btn-return" onclick="returnToQueue()">🔄 לא הגיע - החזר לתור</button>
 </div>
 
             <div class="loading" id="loading">
@@ -1171,7 +1188,37 @@ document.addEventListener('keypress', (e) => {
         performSearch();
     }
 });
-
+async function returnToQueue() {
+    if (!currentCustomer) {
+        showMessage('⚠️ אין מועמד בשירות כרגע', 'error');
+        return;
+    }
+    
+    if (!confirm(`האם להחזיר את המועמד ${currentCustomer} לסוף התור?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/return-to-queue/${STATION_ID}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operator_code: operatorCode })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage(`✅ ${data.message}`, 'success');
+            currentCustomer = null;
+            await updateDisplay();
+        } else {
+            showMessage(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ שגיאה בהחזרה לתור', 'error');
+    }
+}
 
 
 
