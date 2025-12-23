@@ -245,7 +245,7 @@
     },
     {
       "id": 28,
-      "name": "96 1",
+      "name": "אוגדה 96 ע' 1",
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
@@ -254,7 +254,7 @@
     },
     {
       "id": 29,
-      "name": "96 2",
+      "name": "אוגדה 96 ע' 2",
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
@@ -263,7 +263,9 @@
     },
     {
       "id": 30,
-      "name": "96 3",
+
+            "name": "אוגדה 96 ע' 3",
+
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
@@ -272,7 +274,8 @@
     },
     {
       "id": 31,
-      "name": "96 4",
+            "name": "אוגדה 96 ע' 4",
+
       "description": "96",
       "queue_group_id": "og",
       "hidden": 0,
