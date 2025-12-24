@@ -27,22 +27,26 @@
             flex-direction: column;
         }
 
+        
         .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             color: white;
         }
 
         .header h1 {
-            font-size: 36px;
-            margin-bottom: 5px;
+            font-size: 24px;
+            margin-bottom: 3px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .header p {
-            font-size: 16px;
+            font-size: 12px;
             opacity: 0.9;
         }
+
+
+
 
         .stations-grid {
             display: grid;
@@ -217,7 +221,6 @@
     <div class="container">
         <div class="header">
             <h1>🎮 יום מיצוי - מערכת ניהול תורים</h1>
-            <p>עדכון בזמן אמת של כל התחנות</p>
         </div>
 
         <div class="stations-grid" id="stationsGrid">
@@ -304,7 +307,7 @@
 
                 // 5 ממתינים בלבד
                 const waitingDisplay = station.waiting_list && station.waiting_list.length > 0
-                    ? station.waiting_list.slice(0, 5).map((num, index) => 
+                    ? station.waiting_list.slice(0, 10).map((num, index) => 
                         `<div class="waiting-number ${index < 2 ? 'top-waiting' : ''}">${num}</div>`
                       ).join('')
                     : '<div class="waiting-empty">אין בתור</div>';
