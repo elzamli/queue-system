@@ -461,8 +461,8 @@
     },
     {
       "id": 52,
-      "name": "אוגדה 96 טנא",
-      "description": "אוגדה 96 טנא ",
+      "name": "מפאוג ",
+      "description": "מפאוג ",
       "queue_group_id": null,
       "hidden": 1,
       "restricted": 1,
@@ -470,8 +470,8 @@
     },
 {
       "id": 53,
-      "name": "אוגדה 96 מודיעין",
-      "description": "אוגדה 96 מודיעין ",
+      "name": " חטיבה 182 ",
+      "description": "חטיבה 182 ",
       "queue_group_id": null,
       "hidden": 1,
       "restricted": 1,
@@ -479,8 +479,8 @@
     },
 {
       "id": 54,
-      "name": "אוגדה 96 תקשוב",
-      "description": "אוגדה 96 תקשוב ",
+      "name": " חטיבה 185 ",
+      "description": "חטיבה 185 ",
       "queue_group_id": null,
       "hidden": 1,
       "restricted": 1,
@@ -488,13 +488,34 @@
     },
 {
       "id": 55,
-      "name": "אוגדה 96 רפואה",
-      "description": "אוגדה 96 רפואה ",
+      "name": " חטיבה 186",
+      "description": "חטיבה 186",
+      "queue_group_id": null,
+      "hidden": 1,
+      "restricted": 1,
+      "is_routing": 0
+    },
+{
+      "id": 56,
+      "name": " חטיבה 187 ",
+      "description": "חטיבה 187 ",
+      "queue_group_id": null,
+      "hidden": 1,
+      "restricted": 1,
+      "is_routing": 0
+    },
+{
+      "id": 57,
+      "name": " חטיבה 189",
+      "description": "חטיבה 189",
       "queue_group_id": null,
       "hidden": 1,
       "restricted": 1,
       "is_routing": 0
     }
+
+
+
 
 
   ],
@@ -829,7 +850,18 @@
       "station_id": 55,
       "name": "Operator 55"
     },
-
+{
+      "id": 56,
+      "code": "91755",
+      "station_id": 56,
+      "name": "Operator 56"
+    },
+    {
+      "id": 57,
+      "code": "23755",
+      "station_id": 57,
+      "name": "Operator 57"
+    },
 
 
 
