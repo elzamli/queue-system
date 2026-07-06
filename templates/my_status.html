@@ -569,8 +569,23 @@
         el.textContent = parts.join(' | ');
     }
 
-    function testNotificationNow() {
-        showBrowserNotification({ customer_number: currentNumber || 0, station_name: 'בדיקה' });
+    async function testNotificationNow() {
+        const btn = document.getElementById('notifTestBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ שולח...';
+
+        const result = await showBrowserNotification({ customer_number: currentNumber || 0, station_name: 'בדיקה' });
+
+        if (result.ok) {
+            btn.textContent = `✅ הפעולה הצליחה (${result.via}) - בדוק את מגירת ההתראות באנדרואיד`;
+        } else {
+            btn.textContent = '❌ נכשל: ' + result.reason;
+        }
+
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = '🧪 שלח התראת בדיקה עכשיו';
+        }, 6000);
     }
 
     async function requestNotificationPermission() {
@@ -591,7 +606,9 @@
     }
 
     async function showBrowserNotification(data) {
-        if (!browserNotifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+        if (!browserNotifEnabled || !('Notification' in window) || Notification.permission !== 'granted') {
+            return { ok: false, reason: 'אין הרשאה או שהאפשרות כבויה' };
+        }
 
         const title = '🔔 תורך הגיע!';
         const options = { body: `מספר ${data.customer_number} - הגש/י לתחנה: ${data.station_name}` };
@@ -604,7 +621,7 @@
                     new Promise((_, reject) => setTimeout(() => reject(new Error('service worker timeout')), 3000))
                 ]);
                 await registration.showNotification(title, options);
-                return;
+                return { ok: true, via: 'service-worker' };
             } catch (e) {
                 console.warn('Service worker notification failed, falling back to plain Notification:', e);
             }
@@ -616,8 +633,10 @@
                 window.focus();
                 n.close();
             };
+            return { ok: true, via: 'plain-notification' };
         } catch (e) {
             console.error('Browser notification failed:', e);
+            return { ok: false, reason: e.message };
         }
     }
 
