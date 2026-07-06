@@ -556,18 +556,41 @@
         updateBrowserNotifUI();
     }
 
-    function showBrowserNotification(data) {
+    function registerServiceWorker() {
+        if (!('serviceWorker' in navigator)) return;
+        navigator.serviceWorker.register('/static/sw.js').catch((e) => {
+            console.warn('Service worker registration failed, will fall back to plain Notification:', e);
+        });
+    }
+
+    async function showBrowserNotification(data) {
         if (!browserNotifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+
+        const title = '🔔 תורך הגיע!';
+        const options = { body: `מספר ${data.customer_number} - הגש/י לתחנה: ${data.station_name}` };
+
+        // כרום באנדרואיד דוחה את new Notification() ודורש הצגה דרך Service Worker
+        if ('serviceWorker' in navigator) {
+            try {
+                const registration = await Promise.race([
+                    navigator.serviceWorker.ready,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('service worker timeout')), 3000))
+                ]);
+                await registration.showNotification(title, options);
+                return;
+            } catch (e) {
+                console.warn('Service worker notification failed, falling back to plain Notification:', e);
+            }
+        }
+
         try {
-            const n = new Notification('🔔 תורך הגיע!', {
-                body: `מספר ${data.customer_number} - הגש/י לתחנה: ${data.station_name}`
-            });
+            const n = new Notification(title, options);
             n.onclick = () => {
                 window.focus();
                 n.close();
             };
         } catch (e) {
-            // חסימה/חוסר תמיכה - נכשל בשקט, שאר אמצעי ההבלטה עדיין עובדים
+            console.error('Browser notification failed:', e);
         }
     }
 
@@ -639,6 +662,7 @@
     }
 
     async function init() {
+        registerServiceWorker();
         await loadPollInterval();
         tryAutoLogin();
     }
