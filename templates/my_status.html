@@ -267,6 +267,8 @@
                 <div class="disclaimer" id="browserNotifBlocked" style="display: none;">
                     ⚠️ התראות דפדפן חסומות. ניתן לשנות זאת בהגדרות האתר בדפדפן שלך.
                 </div>
+                <div id="notifDebugInfo" style="font-size: 10px; color: #aaa; margin-top: 8px; text-align: center;"></div>
+                <button class="btn btn-secondary" id="notifTestBtn" onclick="testNotificationNow()" style="margin-top: 8px;">🧪 שלח התראת בדיקה עכשיו</button>
             </div>
         </div>
     </div>
@@ -544,6 +546,31 @@
             success.style.display = 'none';
             blocked.style.display = 'none';
         }
+
+        updateNotifDebugInfo();
+    }
+
+    // מידע דיאגנוסטי גלוי על המסך - שימושי לבדיקה בטלפון בלי כלי פיתוח
+    async function updateNotifDebugInfo() {
+        const el = document.getElementById('notifDebugInfo');
+        if (!el) return;
+        const parts = [];
+        parts.push('הרשאה: ' + (('Notification' in window) ? Notification.permission : 'לא נתמך בדפדפן'));
+        if ('serviceWorker' in navigator) {
+            try {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                parts.push('Service Worker: ' + (regs.length ? `רשום (${regs.length})` : 'עדיין לא רשום'));
+            } catch (e) {
+                parts.push('Service Worker: שגיאה - ' + e.message);
+            }
+        } else {
+            parts.push('Service Worker: לא נתמך בדפדפן');
+        }
+        el.textContent = parts.join(' | ');
+    }
+
+    function testNotificationNow() {
+        showBrowserNotification({ customer_number: currentNumber || 0, station_name: 'בדיקה' });
     }
 
     async function requestNotificationPermission() {
