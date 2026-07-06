@@ -571,15 +571,18 @@
 
     async function testNotificationNow() {
         const btn = document.getElementById('notifTestBtn');
+        const debugEl = document.getElementById('notifDebugInfo');
         btn.disabled = true;
         btn.textContent = '⏳ שולח...';
 
         const result = await showBrowserNotification({ customer_number: currentNumber || 0, station_name: 'בדיקה' });
 
         if (result.ok) {
-            btn.textContent = `✅ הפעולה הצליחה (${result.via}) - בדוק את מגירת ההתראות באנדרואיד`;
+            btn.textContent = `✅ נשלח (${result.via})`;
+            debugEl.textContent = 'הפעולה הצליחה - בדוק את מגירת ההתראות באנדרואיד';
         } else {
-            btn.textContent = '❌ נכשל: ' + result.reason;
+            btn.textContent = '❌ נכשל';
+            debugEl.textContent = 'תוצאת בדיקה: ' + result.reason;
         }
 
         setTimeout(() => {
@@ -614,17 +617,21 @@
         const options = { body: `מספר ${data.customer_number} - הגש/י לתחנה: ${data.station_name}` };
 
         // כרום באנדרואיד דוחה את new Notification() ודורש הצגה דרך Service Worker
+        let swErrorMessage = null;
         if ('serviceWorker' in navigator) {
             try {
                 const registration = await Promise.race([
                     navigator.serviceWorker.ready,
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('service worker timeout')), 3000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('פסק זמן בהמתנה ל-Service Worker (3 שניות)')), 3000))
                 ]);
                 await registration.showNotification(title, options);
                 return { ok: true, via: 'service-worker' };
             } catch (e) {
+                swErrorMessage = e.message;
                 console.warn('Service worker notification failed, falling back to plain Notification:', e);
             }
+        } else {
+            swErrorMessage = 'serviceWorker לא נתמך בדפדפן';
         }
 
         try {
@@ -636,7 +643,7 @@
             return { ok: true, via: 'plain-notification' };
         } catch (e) {
             console.error('Browser notification failed:', e);
-            return { ok: false, reason: e.message };
+            return { ok: false, reason: `SW: ${swErrorMessage} | Fallback: ${e.message}` };
         }
     }
 
