@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הגדרות התראות - יום מיצוי</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-card h1 {
+            text-align: center;
+            color: #2d3436;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        input[type="password"], input[type="number"], select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input[type="password"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #556B2F;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: #556B2F;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-login:hover {
+            background: #6B8E23;
+        }
+
+        .main-screen {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2d3436;
+            font-size: 28px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-back {
+            background: #556B2F;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: #6B8E23;
+        }
+
+        .btn-logout {
+            background: #ccc;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-logout:hover {
+            background: #bbb;
+        }
+
+        .content-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .content-card h2 {
+            color: #2d3436;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            font-size: 18px;
+        }
+
+        .info-box {
+            background: #f0f8ff;
+            border-right: 4px solid #556B2F;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-row .label {
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        .toggle-row .hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #556B2F;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .near-turn-params {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 15px;
+            background: #556B2F;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-save:hover:not(:disabled) {
+            background: #6B8E23;
+        }
+
+        .btn-save:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .near-turn-params {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- מסך כניסה -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <h1>🔐 הגדרות התראות</h1>
+            <div class="form-group">
+                <label for="passwordInput">סיסמה:</label>
+                <input
+                    type="password"
+                    id="passwordInput"
+                    placeholder="הקלד סיסמה"
+                    autocomplete="off"
+                    onkeypress="if(event.key === 'Enter') login()"
+                >
+            </div>
+            <button type="button" class="btn-login" onclick="login()">כנס</button>
+        </div>
+    </div>
+
+    <!-- מסך ראשי -->
+    <div class="main-screen" id="mainScreen">
+        <div class="header">
+            <h1>🔔 הגדרות התראות</h1>
+            <div class="header-buttons">
+                <a href="/admin" class="btn-back">← חזרה לניהול</a>
+                <button class="btn-logout" onclick="logout()">יציאה</button>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="content-card" id="settingsCard">
+            <div class="loading">טוען הגדרות...</div>
+        </div>
+    </div>
+
+    <script>
+        let adminPassword = '';
+        let currentConfig = null;
+
+        async function login() {
+            const password = document.getElementById('passwordInput').value;
+
+            try {
+                const response = await fetch('/api/admin/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    adminPassword = password;
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainScreen').style.display = 'block';
+                    loadConfig();
+                } else {
+                    alert('❌ סיסמה שגויה');
+                }
+            } catch (error) {
+                console.error('שגיאה:', error);
+                alert('❌ שגיאה בכניסה');
+            }
+        }
+
+        function logout() {
+            adminPassword = '';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+
+            setTimeout(() => {
+                messageDiv.className = 'message';
+            }, 4000);
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/admin/notifications-config');
+                currentConfig = await response.json();
+                renderSettings();
+            } catch (error) {
+                console.error('שגיאה:', error);
+                document.getElementById('settingsCard').innerHTML =
+                    '<div class="loading" style="color: red;">❌ שגיאה בטעינת הגדרות</div>';
+            }
+        }
+
+        function renderSettings() {
+            const c = currentConfig;
+            document.getElementById('settingsCard').innerHTML = `
+                <h2>איסוף טלפון וכפתור ידני</h2>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="label">אסוף מספר טלפון בעמדת הקליטה</div>
+                        <div class="hint">שדה טלפון אופציונלי יופיע במסך הוספת מועמד</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="collectPhoneAtIntake" ${c.collect_phone_at_intake ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="label">כפתור SMS ידני למפעיל</div>
+                        <div class="hint">מציג כפתור "שלח SMS" במסך המפעיל בזמן קריאה ללקוח</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="manualEnabled" ${c.manual_enabled ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="label">שליחה מיידית בקליטה</div>
+                        <div class="hint">אם נמסר טלפון בקליטה, שולח מיד הודעה על שיוך לתור</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="immediateEnabled" ${c.immediate_enabled ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <h2 style="margin-top: 25px;">התראה בסמיכות לתור</h2>
+                <div class="info-box">
+                    ℹ️ "קרבה" שולח לכל לקוח עם טלפון שמתקרב לתורו. "חכם" שולח רק למי שלא בדק את הסטטוס שלו בעצמו לאחרונה.
+                </div>
+
+                <div class="form-group">
+                    <label for="nearTurnMode">מצב התראת קרבה</label>
+                    <select id="nearTurnMode" onchange="toggleNearTurnParams()">
+                        <option value="none" ${c.near_turn_mode === 'none' ? 'selected' : ''}>כבוי</option>
+                        <option value="proximity" ${c.near_turn_mode === 'proximity' ? 'selected' : ''}>קרבה (שולח לכולם)</option>
+                        <option value="smart" ${c.near_turn_mode === 'smart' ? 'selected' : ''}>חכם (רק למי שלא בדק סטטוס לאחרונה)</option>
+                    </select>
+                </div>
+
+                <div class="near-turn-params">
+                    <div class="form-group">
+                        <label for="nearTurnThreshold">כמה מקומות לפני התור</label>
+                        <input type="number" id="nearTurnThreshold" min="1" value="${c.near_turn_threshold}">
+                    </div>
+                    <div class="form-group" id="smartMinutesGroup">
+                        <label for="smartRecentCheckMinutes">התעלם אם נבדק ב-X דקות אחרונות</label>
+                        <input type="number" id="smartRecentCheckMinutes" min="1" value="${c.smart_recent_check_minutes}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="schedulerIntervalSeconds">תדירות בדיקה (שניות)</label>
+                    <input type="number" id="schedulerIntervalSeconds" min="1" value="${c.scheduler_interval_seconds}">
+                </div>
+
+                <h2 style="margin-top: 25px;">מסך הסטטוס האישי של הלקוח</h2>
+                <div class="form-group">
+                    <label for="myStatusPollSeconds">תדירות רענון מסך "הסטטוס שלי" (שניות)</label>
+                    <input type="number" id="myStatusPollSeconds" min="1" value="${c.my_status_poll_seconds}">
+                    <div style="font-size: 12px; color: #888; margin-top: 6px;">כל כמה שניות מסך my-status הפתוח אצל הלקוח בודק אוטומטית אם התור הגיע</div>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="label">הצעת התראות דפדפן ללקוח</div>
+                        <div class="hint">מציג במסך "הסטטוס שלי" כפתור לאפשר התראת מערכת (Web Notification) כשהתור מגיע</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="browserNotifEnabled" ${c.browser_notif_enabled ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <button class="btn-save" onclick="saveConfig()" id="saveBtn">💾 שמור הגדרות</button>
+            `;
+            toggleNearTurnParams();
+        }
+
+        function toggleNearTurnParams() {
+            const mode = document.getElementById('nearTurnMode').value;
+            document.getElementById('smartMinutesGroup').style.display = mode === 'smart' ? 'block' : 'none';
+        }
+
+        async function saveConfig() {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ שומר...';
+
+            const payload = {
+                password: adminPassword,
+                collect_phone_at_intake: document.getElementById('collectPhoneAtIntake').checked,
+                manual_enabled: document.getElementById('manualEnabled').checked,
+                immediate_enabled: document.getElementById('immediateEnabled').checked,
+                near_turn_mode: document.getElementById('nearTurnMode').value,
+                near_turn_threshold: parseInt(document.getElementById('nearTurnThreshold').value),
+                smart_recent_check_minutes: parseInt(document.getElementById('smartRecentCheckMinutes').value),
+                scheduler_interval_seconds: parseInt(document.getElementById('schedulerIntervalSeconds').value),
+                my_status_poll_seconds: parseInt(document.getElementById('myStatusPollSeconds').value),
+                browser_notif_enabled: document.getElementById('browserNotifEnabled').checked
+            };
+
+            try {
+                const response = await fetch('/api/admin/notifications-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentConfig = data.notifications;
+                    showMessage(`✅ ${data.message}`, 'success');
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('שגיאה:', error);
+                showMessage('❌ שגיאה בשמירת ההגדרות', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 שמור הגדרות';
+            }
+        }
+    </script>
+</body>
+</html>

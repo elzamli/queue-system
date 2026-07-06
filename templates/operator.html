@@ -415,6 +415,22 @@
     background: #e67e00;
 }
 
+.btn-sms {
+    background: #0056b3;
+    color: white;
+    display: none;
+}
+
+.btn-sms:hover:not(:disabled) {
+    background: #003d80;
+    transform: translateY(-2px);
+}
+
+.btn-sms:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
     </style>
 </head>
 <body>
@@ -467,6 +483,7 @@
     </button>
     <button class="btn-return" onclick="returnToQueue()">🔄 לא הגיע - החזר לתור</button>
     <button class="btn-secondary" onclick="openQueueModal()" style="background: #17a2b8;">📋 הצג תור</button>
+    <button class="btn-sms" id="smsBtn" onclick="sendSms()">📱 שלח SMS</button>
 </div>
 
             <div class="loading" id="loading">
@@ -658,6 +675,16 @@ function getStationId() {
                     } else {
                         document.getElementById('currentNumber').innerHTML = '<span class="no-customer">אין בשירות</span>';
                         currentCustomer = null;
+                    }
+
+                    // עדכן כפתור SMS
+                    const smsBtn = document.getElementById('smsBtn');
+                    if (station.has_phone && station.current_number && station.manual_sms_enabled) {
+                        smsBtn.style.display = 'block';
+                        smsBtn.disabled = false;
+                        smsBtn.textContent = '📱 שלח SMS';
+                    } else {
+                        smsBtn.style.display = 'none';
                     }
 
                     // עדכן את מספר הממתינים
@@ -1211,6 +1238,45 @@ document.addEventListener('keypress', (e) => {
         performSearch();
     }
 });
+async function sendSms() {
+    if (!currentCustomer) {
+        showMessage('⚠️ אין מועמד בשירות כרגע', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('smsBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ שולח...';
+
+    try {
+        const response = await fetch('/api/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_number: currentCustomer,
+                operator_code: operatorCode,
+                station_id: STATION_ID
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            btn.textContent = '✅ SMS נשלח';
+            showMessage(`✅ SMS נשלח למועמד ${currentCustomer}`, 'success');
+        } else {
+            showMessage(`❌ ${data.error}`, 'error');
+            btn.disabled = false;
+            btn.textContent = '📱 שלח SMS';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ שגיאה בשליחת SMS', 'error');
+        btn.disabled = false;
+        btn.textContent = '📱 שלח SMS';
+    }
+}
+
 async function returnToQueue() {
     if (!currentCustomer) {
         showMessage('⚠️ אין מועמד בשירות כרגע', 'error');

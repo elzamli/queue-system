@@ -22,7 +22,12 @@ wheels/
 .installed.cfg
 *.egg
 *.db
+*.log
 .DS_Store
+
+# מעקב פנימי - לא עולה לריפו
+/BUGS/
+/IMPROVEMENTS/
 .vscode/
 .idea/
 *.swp

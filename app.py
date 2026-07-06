@@ -4,8 +4,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import json
 import os
+import re
 from datetime import datetime
 import threading
+import time
 import logging
 
 app = Flask(__name__)
@@ -47,6 +49,21 @@ logging.basicConfig(
 
 # Lock for thread safety
 db_lock = threading.Lock()
+config_lock = threading.Lock()
+
+CONFIG_FILE = 'config.json'
+
+DEFAULT_NOTIFICATIONS_CONFIG = {
+    'collect_phone_at_intake': False,
+    'manual_enabled': True,
+    'immediate_enabled': False,
+    'near_turn_mode': 'none',
+    'near_turn_threshold': 3,
+    'smart_recent_check_minutes': 10,
+    'scheduler_interval_seconds': 5,
+    'my_status_poll_seconds': 10,
+    'browser_notif_enabled': True
+}
 
 def log_action(action, details='', level='INFO'):
     """Log an action to file and console"""
@@ -75,6 +92,37 @@ def log_to_history(cursor, customer_number, station_id, station_name, status, ac
     except Exception as e:
         # לא תקים את הtransaction אם logging נופל
         log_action('HISTORY LOG ERROR', str(e), 'ERROR')
+
+
+def get_notifications_config():
+    """Read notifications config, merged over defaults"""
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        return {**DEFAULT_NOTIFICATIONS_CONFIG, **config.get('notifications', {})}
+    except Exception as e:
+        log_action('NOTIFICATIONS CONFIG READ ERROR', str(e), 'ERROR')
+        return dict(DEFAULT_NOTIFICATIONS_CONFIG)
+
+
+def save_notifications_config(updates):
+    """Merge updates into the notifications section of config.json, atomically"""
+    with config_lock:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        merged = {**DEFAULT_NOTIFICATIONS_CONFIG, **config.get('notifications', {}), **updates}
+        config['notifications'] = merged
+        tmp_path = CONFIG_FILE + '.tmp'
+        with open(tmp_path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, CONFIG_FILE)
+        return merged
+
+
+def send_sms_stub(phone_number, customer_number, message, source='manual'):
+    """Single funnel point for all SMS 'sends' - logs only, no real provider"""
+    log_action('SMS STUB', f'[{source}] To: {phone_number} | Customer: {customer_number} | Msg: "{message}"')
+    return True
 
 
 def get_db_connection():
@@ -126,6 +174,9 @@ def init_db():
                 customer_number INTEGER NOT NULL,
                 status TEXT DEFAULT 'waiting',
                 position INTEGER DEFAULT 0,
+                pin TEXT,
+                phone_number TEXT,
+                phone_provided_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 called_at TIMESTAMP,
                 completed_at TIMESTAMP,
@@ -205,6 +256,82 @@ def init_db():
         log_action('INIT DB ERROR', f'{str(e)}', 'ERROR')
         raise
 
+def migrate_db():
+    """Add missing columns to existing database"""
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(queue_entries)")
+        columns = {col[1] for col in cursor.fetchall()}
+        if 'pin' not in columns:
+            cursor.execute("ALTER TABLE queue_entries ADD COLUMN pin TEXT")
+            log_action('MIGRATE DB', 'Added pin column')
+        if 'phone_number' not in columns:
+            cursor.execute("ALTER TABLE queue_entries ADD COLUMN phone_number TEXT")
+            log_action('MIGRATE DB', 'Added phone_number column')
+        if 'phone_provided_at' not in columns:
+            cursor.execute("ALTER TABLE queue_entries ADD COLUMN phone_provided_at TIMESTAMP")
+            log_action('MIGRATE DB', 'Added phone_provided_at column')
+        if 'status_checked_at' not in columns:
+            cursor.execute("ALTER TABLE queue_entries ADD COLUMN status_checked_at TIMESTAMP")
+            log_action('MIGRATE DB', 'Added status_checked_at column')
+        if 'notified_at' not in columns:
+            cursor.execute("ALTER TABLE queue_entries ADD COLUMN notified_at TIMESTAMP")
+            log_action('MIGRATE DB', 'Added notified_at column')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        log_action('MIGRATE DB ERROR', str(e), 'ERROR')
+
+
+def create_indexes():
+    """Create performance indexes if they don't exist yet (idempotent, safe to run every startup)"""
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        # התבנית השכיחה ביותר בקוד: WHERE station_id = ? AND status = ? [ORDER BY position]
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_queue_entries_station_status_position
+            ON queue_entries(station_id, status, position)
+        ''')
+        # חיפושי לקוח לפי מספר תור (my-status, בדיקת כפילות בהוספה/העברה)
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_queue_entries_customer_number
+            ON queue_entries(customer_number)
+        ''')
+        # מסך finish-station: WHERE status = 'finished' ORDER BY finished_at
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_queue_entries_status_finished_at
+            ON queue_entries(status, finished_at)
+        ''')
+        # היסטוריית לקוח (search_customer)
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_queue_entries_history_customer_number
+            ON queue_entries_history(customer_number)
+        ''')
+        conn.commit()
+        conn.close()
+        log_action('CREATE INDEXES', 'Performance indexes ensured')
+    except Exception as e:
+        log_action('CREATE INDEXES ERROR', str(e), 'ERROR')
+
+
+def cleanup_old_phone_numbers():
+    """Delete phone numbers older than 24 hours for privacy"""
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE queue_entries
+            SET phone_number = NULL, phone_provided_at = NULL
+            WHERE phone_provided_at < datetime('now', '-24 hours')
+        ''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        log_action('CLEANUP PHONES ERROR', str(e), 'ERROR')
+
+
 # =====================
 # ROUTES - Web Pages
 # =====================
@@ -256,21 +383,16 @@ def center_data():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        """
-        cursor.execute('SELECT * FROM stations WHERE hidden = 0 AND restricted = 0 ORDER BY id')
-        
-        cursor.execute('SELECT * FROM stations ORDER BY id')
-    """
         cursor.execute('SELECT * FROM stations WHERE hidden = 0 ORDER BY id')
         stations = cursor.fetchall()
-        
+
         result = []
         for station in stations:
             # Get the actual station to get queue data from
             if station['queue_group_id']:
                 # Get first station in queue group
                 cursor.execute('''
-                    SELECT id FROM stations 
+                    SELECT id FROM stations
                     WHERE queue_group_id = ?
                     LIMIT 1
                 ''', (station['queue_group_id'],))
@@ -278,11 +400,8 @@ def center_data():
                 queue_station_id = first_station_row['id']
             else:
                 queue_station_id = station['id']
-            
+
             # Get current customer
-        
-
-
             cursor.execute('''
                 SELECT customer_number FROM queue_entries 
                 WHERE station_id = ? AND status = 'called'
@@ -435,18 +554,34 @@ def add_entry():
     station_id = data.get('station_id')
     customer_number = data.get('customer_number')
     transfer = data.get('transfer', False)
+    pin = str(data.get('pin', '')).strip()
     conn = None
-    
+
     if not station_id or not customer_number:
         log_action('ADD ENTRY FAILED', 'Missing data', 'WARNING')
         return jsonify({'error': 'Missing data'}), 400
-    
+
+    if not transfer and not re.match(r'^\d{4}$', pin):
+        log_action('ADD ENTRY FAILED', 'Invalid PIN', 'WARNING')
+        return jsonify({'error': 'קוד PIN חייב להיות בדיוק 4 ספרות'}), 400
+
+    phone_number = str(data.get('phone_number', '')).replace('-', '').replace(' ', '').strip()
+    if phone_number and not re.match(r'^05\d{8}$', phone_number):
+        log_action('ADD ENTRY FAILED', 'Invalid phone', 'WARNING')
+        return jsonify({'error': 'מספר טלפון לא תקין (דוגמה: 0501234567)'}), 400
+    phone_number = phone_number or None
+
     try:
         customer_number = int(customer_number)
     except ValueError:
         log_action('ADD ENTRY FAILED', 'Invalid number', 'WARNING')
         return jsonify({'error': 'Customer number must be a number'}), 400
-    
+
+    cleanup_old_phone_numbers()
+
+    notify_phone = None
+    notify_station_name = None
+
     try:
         with db_lock:
             conn = get_db_connection()
@@ -505,18 +640,28 @@ def add_entry():
                     }), 409
                 
                 if transfer:
+                    # שמור PIN/טלפון מהרשומה הקודמת - לא מגיעים מהלקוח בהעברה
                     cursor.execute('''
-                        DELETE FROM queue_entries 
+                        SELECT pin, phone_number FROM queue_entries
+                        WHERE customer_number = ? AND station_id = ? AND status != 'completed'
+                        LIMIT 1
+                    ''', (customer_number, other_station_id))
+                    old_entry = cursor.fetchone()
+                    if old_entry and old_entry['pin']:
+                        pin = old_entry['pin']
+                    if old_entry and old_entry['phone_number']:
+                        phone_number = old_entry['phone_number']
+
+                    if not re.match(r'^\d{4}$', pin):
+                        log_action('ADD ENTRY FAILED', 'Transfer missing valid PIN', 'WARNING')
+                        return jsonify({'error': 'לא ניתן להעביר מועמד ללא קוד PIN תקין'}), 400
+
+                    cursor.execute('''
+                        DELETE FROM queue_entries
                         WHERE customer_number = ? AND station_id = ? AND status != 'completed'
                     ''', (customer_number, other_station_id))
                     log_action('CUSTOMER TRANSFERRED', f'Customer {customer_number} transferred')
-            """
-            # Add to queue station
-            cursor.execute('''
-                INSERT INTO queue_entries (station_id, customer_number, status)
-                VALUES (?, ?, 'waiting')
-            ''', (queue_station_id, customer_number))
-           """
+
             # Get max position in queue
             cursor.execute('''
                 SELECT COALESCE(MAX(position), 0) as max_pos FROM queue_entries 
@@ -526,9 +671,9 @@ def add_entry():
 
             # Add to queue station at end
             cursor.execute('''
-                INSERT INTO queue_entries (station_id, customer_number, status, position)
-                VALUES (?, ?, 'waiting', ?)
-            ''', (queue_station_id, customer_number, max_position + 1))
+                INSERT INTO queue_entries (station_id, customer_number, status, position, pin, phone_number, phone_provided_at)
+                VALUES (?, ?, 'waiting', ?, ?, ?, CASE WHEN ? IS NOT NULL THEN CURRENT_TIMESTAMP ELSE NULL END)
+            ''', (queue_station_id, customer_number, max_position + 1, pin, phone_number, phone_number))
 
 
 
@@ -540,12 +685,18 @@ def add_entry():
 
             conn.commit()
             log_action('CUSTOMER ADDED', f'Customer {customer_number} to {station["name"]}')
-            
-            return jsonify({
+
+            if phone_number:
+                notify_phone = phone_number
+                notify_station_name = station["name"]
+
+            response = jsonify({
                 'success': True,
-                'message': f'Customer {customer_number} added to queue'
-            }), 201
-    
+                'message': f'Customer {customer_number} added to queue',
+                'pin': pin
+            })
+            response_status = 201
+
     except Exception as e:
         if conn:
             conn.rollback()
@@ -554,6 +705,15 @@ def add_entry():
     finally:
         if conn:
             conn.close()
+
+    if notify_phone and get_notifications_config().get('immediate_enabled'):
+        message = (
+            f"שלום, נקלטת בתור בתחנה '{notify_station_name}', מספר תור שלך: {customer_number}. "
+            f"נעדכן אותך כשתורך יתקרב."
+        )
+        send_sms_stub(notify_phone, customer_number, message, source='immediate')
+
+    return response, response_status
 
 
 @app.route('/api/call-next/<int:station_id>', methods=['POST'])
@@ -1159,13 +1319,81 @@ def get_all_stations():
         stations = cursor.fetchall()
         
         result = [dict(station) for station in stations]
-        
+
         conn.close()
         return jsonify(result)
     except Exception as e:
         log_action('GET ALL STATIONS ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
-    
+
+@app.route('/api/public-notifications-config')
+def public_notifications_config():
+    """Public subset of notifications config, for the intake screen"""
+    notif = get_notifications_config()
+    return jsonify({
+        'collect_phone_at_intake': notif.get('collect_phone_at_intake', False),
+        'my_status_poll_seconds': notif.get('my_status_poll_seconds', 10),
+        'browser_notif_enabled': notif.get('browser_notif_enabled', True)
+    })
+
+@app.route('/admin/notifications')
+def admin_notifications():
+    """Admin notifications settings screen"""
+    log_action('VIEW ACCESSED', 'Admin notifications screen')
+    return render_template('admin_notifications.html')
+
+@app.route('/api/admin/notifications-config', methods=['GET'])
+def get_admin_notifications_config():
+    """Get full notifications config (page itself is gated by admin login)"""
+    return jsonify(get_notifications_config())
+
+@app.route('/api/admin/notifications-config', methods=['POST'])
+def update_admin_notifications_config():
+    """Update notifications config (admin password required)"""
+    data = request.json
+    password = data.get('password')
+
+    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+
+    if password != config.get('admin_password'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if data.get('near_turn_mode') not in ('none', 'proximity', 'smart'):
+        return jsonify({'error': 'Invalid near_turn_mode'}), 400
+
+    try:
+        near_turn_threshold = int(data.get('near_turn_threshold'))
+        smart_recent_check_minutes = int(data.get('smart_recent_check_minutes'))
+        scheduler_interval_seconds = int(data.get('scheduler_interval_seconds'))
+        my_status_poll_seconds = int(data.get('my_status_poll_seconds'))
+        if (near_turn_threshold < 1 or smart_recent_check_minutes < 1
+                or scheduler_interval_seconds < 1 or my_status_poll_seconds < 1):
+            raise ValueError('must be positive')
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid numeric settings'}), 400
+
+    updates = {
+        'collect_phone_at_intake': bool(data.get('collect_phone_at_intake')),
+        'manual_enabled': bool(data.get('manual_enabled')),
+        'immediate_enabled': bool(data.get('immediate_enabled')),
+        'near_turn_mode': data.get('near_turn_mode'),
+        'near_turn_threshold': near_turn_threshold,
+        'smart_recent_check_minutes': smart_recent_check_minutes,
+        'scheduler_interval_seconds': scheduler_interval_seconds,
+        'my_status_poll_seconds': my_status_poll_seconds,
+        'browser_notif_enabled': bool(data.get('browser_notif_enabled'))
+    }
+
+    try:
+        merged = save_notifications_config(updates)
+        log_action('NOTIFICATIONS CONFIG UPDATED', str(merged))
+        return jsonify({'success': True, 'message': 'הגדרות ההתראות עודכנו בהצלחה!', 'notifications': merged})
+    except Exception as e:
+        log_action('NOTIFICATIONS CONFIG UPDATE ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
 
 
 @app.route('/api/search-customer', methods=['GET'])
@@ -1545,39 +1773,33 @@ def return_to_queue(station_id):
                 queue_station_id = cursor.fetchone()['id']
             else:
                 queue_station_id = station_id
-            """
-            # Get max position in queue
+
+            # Get all waiting entries to calculate correct position
             cursor.execute('''
-                SELECT COALESCE(MAX(position), 0) as max_pos FROM queue_entries 
+                SELECT id, position FROM queue_entries 
                 WHERE station_id = ? AND status = 'waiting'
+                ORDER BY position ASC, created_at ASC
             ''', (queue_station_id,))
-            max_position = cursor.fetchone()['max_pos']
-            
-            # Update customer: change status back to waiting, set position to end
-            cursor.execute('''
-                UPDATE queue_entries 
-                SET status = 'waiting', station_id = ?, position = ?, called_at = NULL
-                WHERE id = ?
-            ''', (queue_station_id, max_position + 1, entry['id']))
-            """
+            waiting_entries = cursor.fetchall()
 
-            # Set position to 6 (or end of queue if less than 6 waiting)
-            cursor.execute('''
-                SELECT COUNT(*) as count FROM queue_entries 
-                WHERE station_id = ? AND status = 'waiting'
-            ''', (queue_station_id,))
-            waiting_count = cursor.fetchone()['count']
+            waiting_count = len(waiting_entries)
 
-            # אם יש פחות מ-5 בתור, שים בסוף. אחרת שים במקום 6
-            new_position = 6 if waiting_count >= 5 else waiting_count + 1
+            if waiting_count >= 5:
+                # שים במקום 6 - צריך להזיז את כל מי שמ-6 ומעלה
+                for i, w in enumerate(waiting_entries):
+                    if i >= 5:  # מקום 6 ומעלה (אינדקס 5+)
+                        cursor.execute('UPDATE queue_entries SET position = ? WHERE id = ?', (i + 2, w['id']))
+                new_position = 6
+            else:
+                # שים בסוף - מקום אחרי האחרון
+                new_position = waiting_count + 1
 
-            # Update customer: change status back to waiting, set position to 6
+            # Return the customer itself to waiting, freeing up the station
             cursor.execute('''
-                UPDATE queue_entries 
+                UPDATE queue_entries
                 SET status = 'waiting', station_id = ?, position = ?, called_at = NULL
                 WHERE id = ?
             ''', (queue_station_id, new_position, entry['id']))
-
 
             # Log to history
             cursor.execute('SELECT name FROM stations WHERE id = ?', (queue_station_id,))
@@ -1708,12 +1930,13 @@ def operator_data(station_id):
         
         # Get current customer (called)
         cursor.execute('''
-            SELECT customer_number FROM queue_entries 
+            SELECT customer_number, phone_number FROM queue_entries
             WHERE station_id = ? AND status = 'called'
             LIMIT 1
         ''', (station_id,))
         current = cursor.fetchone()
         current_number = current['customer_number'] if current else None
+        has_phone = bool(current['phone_number']) if current else False
         
         # Get waiting list
         cursor.execute('''
@@ -1736,6 +1959,8 @@ def operator_data(station_id):
             'hidden': station['hidden'],
             'restricted': station['restricted'],
             'current_number': current_number,
+            'has_phone': has_phone,
+            'manual_sms_enabled': get_notifications_config().get('manual_enabled', True),
             'waiting_list': waiting_list,
             'waiting_count': len(waiting_list)
         })
@@ -1744,13 +1969,270 @@ def operator_data(station_id):
         log_action('OPERATOR DATA ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
+@app.route('/my-status')
+def my_status_page():
+    """Personal queue status page"""
+    log_action('VIEW ACCESSED', 'My status page')
+    return render_template('my_status.html')
+
+
+@app.route('/api/my-status', methods=['POST'])
+def api_my_status():
+    """Check personal queue status using customer_number + PIN"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    pin = str(data.get('pin', '')).strip()
+
+    if not customer_number or not pin:
+        return jsonify({'error': 'Missing data'}), 400
+
+    cleanup_old_phone_numbers()
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT qe.*, s.name as station_name, s.queue_group_id
+            FROM queue_entries qe
+            JOIN stations s ON qe.station_id = s.id
+            WHERE qe.customer_number = ? AND qe.pin = ? AND qe.status IN ('waiting', 'called')
+            LIMIT 1
+        ''', (customer_number, pin))
+        entry = cursor.fetchone()
+
+        if not entry:
+            cursor.execute('''
+                SELECT id FROM queue_entries
+                WHERE customer_number = ? AND status IN ('waiting', 'called')
+                LIMIT 1
+            ''', (customer_number,))
+            exists = cursor.fetchone()
+            conn.close()
+            if exists:
+                return jsonify({'found': False, 'wrong_pin': True}), 401
+            return jsonify({'found': False}), 404
+
+        position = 0
+        if entry['status'] == 'waiting':
+            if entry['queue_group_id']:
+                cursor.execute('''
+                    SELECT COUNT(*) as pos FROM queue_entries qe
+                    JOIN stations s ON qe.station_id = s.id
+                    WHERE s.queue_group_id = ? AND qe.status = 'waiting'
+                    AND (qe.position < ? OR (qe.position = ? AND qe.created_at < ?))
+                ''', (entry['queue_group_id'], entry['position'], entry['position'], entry['created_at']))
+            else:
+                cursor.execute('''
+                    SELECT COUNT(*) as pos FROM queue_entries
+                    WHERE station_id = ? AND status = 'waiting'
+                    AND (position < ? OR (position = ? AND created_at < ?))
+                ''', (entry['station_id'], entry['position'], entry['position'], entry['created_at']))
+            position = cursor.fetchone()['pos'] + 1
+
+        station_count = 1
+        if entry['queue_group_id']:
+            cursor.execute('SELECT COUNT(*) as cnt FROM stations WHERE queue_group_id = ?', (entry['queue_group_id'],))
+            station_count = cursor.fetchone()['cnt']
+
+        cursor.execute('''
+            UPDATE queue_entries SET status_checked_at = CURRENT_TIMESTAMP WHERE id = ?
+        ''', (entry['id'],))
+        conn.commit()
+
+        conn.close()
+        return jsonify({
+            'found': True,
+            'customer_number': customer_number,
+            'station_name': entry['station_name'],
+            'status': entry['status'],
+            'position': position,
+            'station_count': station_count,
+            'has_phone': bool(entry['phone_number']),
+            'phone_last4': entry['phone_number'][-4:] if entry['phone_number'] else None
+        })
+
+    except Exception as e:
+        log_action('MY STATUS ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/save-phone', methods=['POST'])
+def save_phone():
+    """Save phone number for customer (requires PIN auth)"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    pin = str(data.get('pin', '')).strip()
+    phone_number = str(data.get('phone_number', '')).replace('-', '').replace(' ', '')
+
+    if not customer_number or not pin or not phone_number:
+        return jsonify({'error': 'Missing data'}), 400
+
+    if not re.match(r'^05\d{8}$', phone_number):
+        return jsonify({'error': 'מספר טלפון לא תקין (דוגמה: 0501234567)'}), 400
+
+    cleanup_old_phone_numbers()
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE queue_entries
+            SET phone_number = ?, phone_provided_at = CURRENT_TIMESTAMP
+            WHERE customer_number = ? AND pin = ? AND status IN ('waiting', 'called')
+        ''', (phone_number, customer_number, pin))
+
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'מועמד לא נמצא או קוד PIN שגוי'}), 404
+
+        conn.commit()
+        conn.close()
+        log_action('PHONE SAVED', f'Customer {customer_number} provided phone number')
+        return jsonify({'success': True})
+
+    except Exception as e:
+        log_action('SAVE PHONE ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/send-sms', methods=['POST'])
+def send_sms():
+    """Send SMS to current customer (stub - logs only)"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    operator_code = data.get('operator_code')
+    station_id = data.get('station_id')
+
+    if not customer_number or not operator_code or not station_id:
+        return jsonify({'error': 'Missing data'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT id FROM operators WHERE code = ? AND station_id = ?
+        ''', (operator_code, station_id))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Operator not authorized'}), 401
+
+        cursor.execute('''
+            SELECT phone_number FROM queue_entries
+            WHERE customer_number = ? AND status = 'called'
+            LIMIT 1
+        ''', (customer_number,))
+        entry = cursor.fetchone()
+        conn.close()
+
+        if not entry or not entry['phone_number']:
+            return jsonify({'error': 'לא נמצא מספר טלפון ללקוח'}), 404
+
+        phone = entry['phone_number']
+        message = f'שלום, תורך מספר {customer_number} הגיע! אנא הגש/י לתחנה.'
+        send_sms_stub(phone, customer_number, message, source='manual')
+
+        return jsonify({'success': True, 'stub': True, 'message': 'SMS נשלח (stub)'})
+
+    except Exception as e:
+        log_action('SEND SMS ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+
+# =====================
+# NOTIFICATION SCHEDULER
+# =====================
+
+def evaluate_pending_notifications():
+    """Check waiting customers against the active near-turn trigger mode and fire stub notifications"""
+    notif = get_notifications_config()
+    mode = notif.get('near_turn_mode', 'none')
+    if mode == 'none':
+        return
+
+    threshold = notif.get('near_turn_threshold', 3)
+    recent_minutes = notif.get('smart_recent_check_minutes', 10)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cutoff = None
+        if mode == 'smart':
+            cursor.execute("SELECT datetime('now', ?) as cutoff", (f'-{recent_minutes} minutes',))
+            cutoff = cursor.fetchone()['cutoff']
+
+        cursor.execute('SELECT * FROM stations ORDER BY id')
+        stations = cursor.fetchall()
+
+        seen_groups = set()
+        for station in stations:
+            group_key = station['queue_group_id'] or f"station_{station['id']}"
+            if group_key in seen_groups:
+                continue
+            seen_groups.add(group_key)
+
+            if station['queue_group_id']:
+                cursor.execute('''
+                    SELECT id FROM stations WHERE queue_group_id = ? LIMIT 1
+                ''', (station['queue_group_id'],))
+                queue_station_id = cursor.fetchone()['id']
+            else:
+                queue_station_id = station['id']
+
+            cursor.execute('''
+                SELECT id, customer_number, phone_number, notified_at, status_checked_at
+                FROM queue_entries
+                WHERE station_id = ? AND status = 'waiting'
+                ORDER BY position ASC, created_at ASC
+            ''', (queue_station_id,))
+            waiting = cursor.fetchall()
+
+            for idx, entry in enumerate(waiting):
+                position = idx + 1
+                if position > threshold:
+                    break
+                if not entry['phone_number'] or entry['notified_at']:
+                    continue
+
+                if mode == 'smart' and entry['status_checked_at'] and entry['status_checked_at'] >= cutoff:
+                    continue
+
+                message = (
+                    f"שלום, מספר {entry['customer_number']}, תורך מתקרב בתחנה '{station['name']}'. "
+                    f"אנא הגיע/י בזמן הקרוב."
+                )
+                send_sms_stub(entry['phone_number'], entry['customer_number'], message, source=mode)
+
+                with db_lock:
+                    cursor.execute('UPDATE queue_entries SET notified_at = CURRENT_TIMESTAMP WHERE id = ?', (entry['id'],))
+                    conn.commit()
+    finally:
+        conn.close()
+
+
+def notification_scheduler_loop():
+    """Background loop evaluating proximity/smart SMS triggers"""
+    log_action('SCHEDULER STARTED', 'Notification scheduler running')
+    while True:
+        try:
+            interval = get_notifications_config().get('scheduler_interval_seconds', 5)
+            time.sleep(interval)
+            evaluate_pending_notifications()
+        except Exception as e:
+            log_action('SCHEDULER ERROR', str(e), 'ERROR')
+
+
 # =====================
 # INITIALIZATION
 # =====================
 
 try:
     init_db()
+    migrate_db()
+    create_indexes()
     log_action('DATABASE READY', 'Database initialized')
+    threading.Thread(target=notification_scheduler_loop, daemon=True).start()
 except Exception as e:
     log_action('DATABASE ERROR', str(e), 'ERROR')
 

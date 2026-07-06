@@ -468,7 +468,7 @@
       "restricted": 1,
       "is_routing": 0
     },
-{
+    {
       "id": 53,
       "name": " חטיבה 182 ",
       "description": "חטיבה 182 ",
@@ -477,7 +477,7 @@
       "restricted": 1,
       "is_routing": 0
     },
-{
+    {
       "id": 54,
       "name": " חטיבה 185 ",
       "description": "חטיבה 185 ",
@@ -486,7 +486,7 @@
       "restricted": 1,
       "is_routing": 0
     },
-{
+    {
       "id": 55,
       "name": " חטיבה 186",
       "description": "חטיבה 186",
@@ -495,7 +495,7 @@
       "restricted": 1,
       "is_routing": 0
     },
-{
+    {
       "id": 56,
       "name": " חטיבה 187 ",
       "description": "חטיבה 187 ",
@@ -504,7 +504,7 @@
       "restricted": 1,
       "is_routing": 0
     },
-{
+    {
       "id": 57,
       "name": " חטיבה 189",
       "description": "חטיבה 189",
@@ -513,11 +513,6 @@
       "restricted": 1,
       "is_routing": 0
     }
-
-
-
-
-
   ],
   "operators": [
     {
@@ -826,7 +821,7 @@
       "station_id": 51,
       "name": "Operator 51"
     },
-{
+    {
       "id": 52,
       "code": "49797",
       "station_id": 52,
@@ -850,7 +845,7 @@
       "station_id": 55,
       "name": "Operator 55"
     },
-{
+    {
       "id": 56,
       "code": "91755",
       "station_id": 56,
@@ -862,10 +857,6 @@
       "station_id": 57,
       "name": "Operator 57"
     },
-
-
-
-
     {
       "id": 100,
       "code": "9999",
@@ -878,5 +869,16 @@
   "status_password": "status123",
   "center3": {
     "rotation_interval_seconds": 12
+  },
+  "notifications": {
+    "collect_phone_at_intake": false,
+    "manual_enabled": true,
+    "immediate_enabled": false,
+    "near_turn_mode": "none",
+    "near_turn_threshold": 3,
+    "smart_recent_check_minutes": 10,
+    "scheduler_interval_seconds": 5,
+    "my_status_poll_seconds": 10,
+    "browser_notif_enabled": true
   }
 }

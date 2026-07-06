@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סטטוס התור שלי</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d3436 0%, #544d3d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 { font-size: 28px; color: #2d3436; margin-bottom: 8px; }
+        .header p { color: #666; font-size: 14px; }
+
+        .form-group { margin-bottom: 20px; }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #556B2F;
+            box-shadow: 0 0 0 3px rgba(85,107,47,0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary { background: #556B2F; color: white; }
+        .btn-primary:hover { background: #6B8E23; transform: translateY(-2px); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover { background: #e0e0e0; }
+
+        .message {
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+        .message.error { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; display: block; }
+        .message.success { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; display: block; }
+
+        /* Status display */
+        #statusSection { display: none; }
+
+        .status-box {
+            background: linear-gradient(135deg, #556B2F 0%, #6B8E23 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .status-label { font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .status-number { font-size: 64px; font-weight: bold; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .status-text { font-size: 14px; opacity: 0.9; margin-top: 12px; }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border-right: 3px solid #556B2F;
+        }
+
+        .info-row .label { color: #666; }
+        .info-row .value { font-weight: 600; color: #2d3436; }
+
+        /* Phone section */
+        .phone-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .phone-section h3 { font-size: 15px; color: #2d3436; margin-bottom: 12px; }
+
+        .disclaimer {
+            background: #fffbf0;
+            border: 1px solid #f0d98e;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            color: #856404;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .phone-success {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .spinner-wrap { text-align: center; padding: 20px; display: none; }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #556B2F;
+            border-radius: 50%;
+            width: 28px; height: 28px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 480px) {
+            .card { padding: 25px; }
+            .status-number { font-size: 48px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>📋 סטטוס התור שלי</h1>
+            <p id="loginHint">הזן את מספר התור וקוד ה-PIN שקיבלת</p>
+        </div>
+
+        <!-- Login form -->
+        <div id="loginSection">
+            <div id="loginMessage" class="message"></div>
+
+            <div class="form-group">
+                <label for="inputNumber">מספר סידורי:</label>
+                <input type="number" id="inputNumber" placeholder="הקלד מספר סידורי" min="1" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="inputPin">קוד PIN (4 ספרות):</label>
+                <input type="text" id="inputPin" placeholder="XXXX" maxlength="4" pattern="\d{4}"
+                    inputmode="numeric" autocomplete="off"
+                    style="letter-spacing: 8px; font-size: 24px; text-align: center;">
+            </div>
+
+            <div class="spinner-wrap" id="loginSpinner">
+                <div class="spinner"></div>
+                <p style="color:#556B2F;font-size:13px;">בודק...</p>
+            </div>
+
+            <button class="btn btn-primary" onclick="checkStatus()">🔍 בדוק סטטוס</button>
+        </div>
+
+        <!-- Status display -->
+        <div id="statusSection">
+            <div id="statusMessage" class="message"></div>
+
+            <div class="status-box" id="statusBox">
+                <div class="status-label" id="statusLabel">ממתין בתור</div>
+                <div class="status-number" id="positionDisplay">-</div>
+                <div class="status-text" id="statusSubtext"></div>
+            </div>
+
+            <div class="info-row">
+                <span class="label">מספר תור</span>
+                <span class="value" id="displayNumber">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">תחנה</span>
+                <span class="value" id="displayStation">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">סטטוס</span>
+                <span class="value" id="displayStatus">-</span>
+            </div>
+
+            <!-- Phone section -->
+            <div class="phone-section" id="phoneSection">
+                <h3>📱 קבל עדכון SMS כשתורך הגיע</h3>
+                <div class="disclaimer" id="phoneDisclaimer">
+                    ⚠️ מספר הטלפון ישמש אך ורק לעדכון על תורך ביום זה, ויימחק אוטומטית תוך 24 שעות.
+                    המידע לא יועבר לצד שלישי.
+                </div>
+                <div id="phoneInputArea">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <input type="tel" id="phoneInput" placeholder="0501234567" maxlength="10"
+                            inputmode="numeric" autocomplete="tel">
+                    </div>
+                    <button class="btn btn-primary" onclick="savePhone()" id="savePhoneBtn">💾 שמור מספר</button>
+                </div>
+                <div class="phone-success" id="phoneSuccess">
+                    <span id="phoneSuccessText">✅ מספר הטלפון נשמר! תקבל SMS כשתורך יגיע.</span>
+                    <div>
+                        <button class="btn btn-secondary" id="editPhoneBtn" onclick="editPhone()" style="margin-top: 8px;">✏️ ערוך מספר</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Browser notification opt-in -->
+            <div class="phone-section" id="browserNotifSection" style="display: none;">
+                <h3>🔔 התראת דפדפן כשתורך יגיע</h3>
+                <div id="browserNotifPrompt">
+                    <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
+                        תקבל התראת מערכת גם אם הטאב הזה לא פתוח מולך.
+                    </p>
+                    <button class="btn btn-primary" id="enableNotifBtn" onclick="requestNotificationPermission()">🔔 אפשר התראות דפדפן</button>
+                </div>
+                <div class="phone-success" id="browserNotifSuccess">
+                    <span>✅ התראות דפדפן מופעלות - תקבל התראה גם אם הטאב לא בפוקוס.</span>
+                </div>
+                <div class="disclaimer" id="browserNotifBlocked" style="display: none;">
+                    ⚠️ התראות דפדפן חסומות. ניתן לשנות זאת בהגדרות האתר בדפדפן שלך.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const REMEMBER_KEY = 'queueStatus';
+    let currentNumber = null;
+    let currentPin = null;
+    let lastStatus = null;
+
+    // רענון אוטומטי (polling)
+    let pollTimer = null;
+    let pollIntervalMs = 10000;
+    let browserNotifEnabled = true;
+
+    // הבלטת "הגיע התור" - צליל + הבהוב כותרת
+    let audioCtx = null;
+    let titleFlashTimer = null;
+    const originalTitle = document.title;
+
+    async function checkStatus() {
+        const number = document.getElementById('inputNumber').value.trim();
+        const pin = document.getElementById('inputPin').value.trim();
+        const msgDiv = document.getElementById('loginMessage');
+
+        if (!number || !pin) {
+            msgDiv.textContent = '⚠️ אנא מלא את כל השדות';
+            msgDiv.className = 'message error';
+            return;
+        }
+        if (!/^\d{4}$/.test(pin)) {
+            msgDiv.textContent = '⚠️ קוד PIN חייב להיות בדיוק 4 ספרות';
+            msgDiv.className = 'message error';
+            return;
+        }
+
+        msgDiv.className = 'message';
+        document.getElementById('loginSpinner').style.display = 'block';
+
+        try {
+            const response = await fetch('/api/my-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customer_number: parseInt(number), pin })
+            });
+            const data = await response.json();
+
+            document.getElementById('loginSpinner').style.display = 'none';
+
+            if (response.status === 401 || data.wrong_pin) {
+                msgDiv.textContent = '❌ קוד PIN שגוי';
+                msgDiv.className = 'message error';
+                localStorage.removeItem(REMEMBER_KEY);
+                return;
+            }
+            if (!data.found) {
+                msgDiv.textContent = '❌ מספר תור לא נמצא במערכת';
+                msgDiv.className = 'message error';
+                localStorage.removeItem(REMEMBER_KEY);
+                return;
+            }
+
+            currentNumber = parseInt(number);
+            currentPin = pin;
+            localStorage.setItem(REMEMBER_KEY, JSON.stringify({ number: currentNumber, pin: currentPin }));
+            showStatus(data);
+            startPolling();
+
+        } catch (err) {
+            document.getElementById('loginSpinner').style.display = 'none';
+            msgDiv.textContent = '❌ שגיאה בחיבור';
+            msgDiv.className = 'message error';
+        }
+    }
+
+    function renderPhoneSaved(last4) {
+        document.getElementById('phoneInputArea').style.display = 'none';
+        document.getElementById('phoneDisclaimer').style.display = 'none';
+        document.getElementById('phoneSuccess').style.display = 'block';
+        document.getElementById('phoneSuccessText').textContent = last4
+            ? `✅ מספר טלפון שמור (מסתיים ב-${last4}) - תקבל SMS כשתורך יגיע.`
+            : '✅ מספר הטלפון נשמר! תקבל SMS כשתורך יגיע.';
+        document.getElementById('editPhoneBtn').style.display = (lastStatus !== 'released') ? 'inline-block' : 'none';
+    }
+
+    function renderPhoneNeeded() {
+        document.getElementById('phoneInputArea').style.display = 'block';
+        document.getElementById('phoneDisclaimer').style.display = 'block';
+        document.getElementById('phoneSuccess').style.display = 'none';
+    }
+
+    function editPhone() {
+        renderPhoneNeeded();
+        document.getElementById('phoneInput').value = '';
+        document.getElementById('savePhoneBtn').disabled = false;
+        document.getElementById('savePhoneBtn').textContent = '💾 שמור מספר';
+    }
+
+    function showStatus(data) {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('statusSection').style.display = 'block';
+        document.getElementById('loginHint').style.display = 'none';
+
+        const previousStatus = lastStatus;
+        lastStatus = data.status;
+
+        document.getElementById('displayNumber').textContent = data.customer_number;
+        document.getElementById('displayStation').textContent = data.station_name;
+
+        const statusMap = { waiting: 'ממתין', called: 'נקרא - הגש/י לתחנה!', completed: 'הסתיים', finished: 'הסתיים' };
+        document.getElementById('displayStatus').textContent = statusMap[data.status] || data.status;
+
+        const statusBox = document.getElementById('statusBox');
+        if (data.status === 'called') {
+            statusBox.style.background = 'linear-gradient(135deg, #28a745 0%, #218838 100%)';
+            document.getElementById('statusLabel').textContent = '🔔 תורך הגיע!';
+            document.getElementById('positionDisplay').textContent = '✓';
+            document.getElementById('statusSubtext').textContent = 'הגש/י לתחנה: ' + data.station_name;
+        } else {
+            statusBox.style.background = 'linear-gradient(135deg, #556B2F 0%, #6B8E23 100%)';
+            document.getElementById('statusLabel').textContent = 'מיקום בתור';
+            document.getElementById('positionDisplay').textContent = data.position;
+            const ahead = data.position - 1;
+            let subtext = ahead > 0 ? `${ahead} אנשים לפניך` : 'אתה הבא בתור!';
+            if (data.station_count > 1) {
+                subtext += ` (יש ${data.station_count} עמדות מקבילות לתור זה, ולכן תורך עשוי להגיע מהר יותר ממה שנראה)`;
+            }
+            document.getElementById('statusSubtext').textContent = subtext;
+        }
+
+        if (data.has_phone) {
+            renderPhoneSaved(data.phone_last4);
+        } else {
+            renderPhoneNeeded();
+        }
+
+        updateBrowserNotifUI();
+
+        if (previousStatus !== 'called' && data.status === 'called') {
+            playAlertSound();
+            startTitleFlash();
+            showBrowserNotification(data);
+        }
+    }
+
+    // ===== רענון אוטומטי (polling) =====
+    function startPolling() {
+        if (pollTimer) return;
+        pollTimer = setInterval(pollStatus, pollIntervalMs);
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    async function pollStatus() {
+        if (!currentNumber || !currentPin) {
+            stopPolling();
+            return;
+        }
+        try {
+            const response = await fetch('/api/my-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customer_number: currentNumber, pin: currentPin })
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.found) {
+                stopPolling();
+                showFinishedMessage();
+                return;
+            }
+            showStatus(data);
+        } catch (err) {
+            // תקלת רשת חולפת - ננסה שוב באינטרוול הבא
+        }
+    }
+
+    function showFinishedMessage() {
+        const msgDiv = document.getElementById('statusMessage');
+        msgDiv.textContent = '✅ התור שלך הסתיים, תודה!';
+        msgDiv.className = 'message success';
+        localStorage.removeItem(REMEMBER_KEY);
+    }
+
+    // ===== הבלטת "הגיע התור": צליל =====
+    function warmUpAudio() {
+        if (audioCtx) return;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            // דפדפן לא תומך - נמשיך בלי צליל
+        }
+    }
+    ['click', 'touchstart', 'keydown'].forEach(evt =>
+        document.addEventListener(evt, warmUpAudio, { once: true })
+    );
+
+    function playAlertSound() {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const beep = (delayMs) => {
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.value = 880;
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                }, delayMs);
+            };
+            beep(0);
+            beep(450);
+        } catch (e) {
+            // חסימת autoplay של הדפדפן או חוסר תמיכה - נכשל בשקט, ההבהוב בכותרת עדיין עובד
+        }
+    }
+
+    // ===== הבלטת "הגיע התור": הבהוב כותרת הטאב =====
+    function startTitleFlash() {
+        if (titleFlashTimer) return;
+        let toggled = false;
+        titleFlashTimer = setInterval(() => {
+            document.title = toggled ? originalTitle : '🔔 תורך הגיע!';
+            toggled = !toggled;
+        }, 1000);
+        window.addEventListener('focus', stopTitleFlash);
+    }
+
+    function stopTitleFlash() {
+        if (titleFlashTimer) {
+            clearInterval(titleFlashTimer);
+            titleFlashTimer = null;
+            document.title = originalTitle;
+        }
+        window.removeEventListener('focus', stopTitleFlash);
+    }
+
+    // ===== הבלטת "הגיע התור": התראת דפדפן (Web Notification) =====
+    function updateBrowserNotifUI() {
+        const section = document.getElementById('browserNotifSection');
+        if (!browserNotifEnabled || !('Notification' in window)) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = 'block';
+
+        const prompt = document.getElementById('browserNotifPrompt');
+        const success = document.getElementById('browserNotifSuccess');
+        const blocked = document.getElementById('browserNotifBlocked');
+
+        if (Notification.permission === 'granted') {
+            prompt.style.display = 'none';
+            success.style.display = 'block';
+            blocked.style.display = 'none';
+        } else if (Notification.permission === 'denied') {
+            prompt.style.display = 'none';
+            success.style.display = 'none';
+            blocked.style.display = 'block';
+        } else {
+            prompt.style.display = 'block';
+            success.style.display = 'none';
+            blocked.style.display = 'none';
+        }
+    }
+
+    async function requestNotificationPermission() {
+        if (!('Notification' in window)) return;
+        try {
+            await Notification.requestPermission();
+        } catch (e) {
+            // דפדפן ישן עם API מבוסס callback - נתעלם, updateBrowserNotifUI ישאיר את מצב הבקשה
+        }
+        updateBrowserNotifUI();
+    }
+
+    function showBrowserNotification(data) {
+        if (!browserNotifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+        try {
+            const n = new Notification('🔔 תורך הגיע!', {
+                body: `מספר ${data.customer_number} - הגש/י לתחנה: ${data.station_name}`
+            });
+            n.onclick = () => {
+                window.focus();
+                n.close();
+            };
+        } catch (e) {
+            // חסימה/חוסר תמיכה - נכשל בשקט, שאר אמצעי ההבלטה עדיין עובדים
+        }
+    }
+
+    async function savePhone() {
+        const phone = document.getElementById('phoneInput').value.replace(/[-\s]/g, '');
+        const btn = document.getElementById('savePhoneBtn');
+
+        if (!phone) {
+            alert('אנא הזן מספר טלפון');
+            return;
+        }
+        if (!/^05\d{8}$/.test(phone)) {
+            alert('מספר טלפון לא תקין (דוגמה: 0501234567)');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = '⏳ שומר...';
+
+        try {
+            const response = await fetch('/api/save-phone', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customer_number: currentNumber, pin: currentPin, phone_number: phone })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                renderPhoneSaved(phone.slice(-4));
+            } else {
+                alert(data.error || 'שגיאה בשמירה');
+                btn.disabled = false;
+                btn.textContent = '💾 שמור מספר';
+            }
+        } catch (err) {
+            alert('שגיאה בחיבור');
+            btn.disabled = false;
+            btn.textContent = '💾 שמור מספר';
+        }
+    }
+
+    // זכור כניסה למשך היום - נסה כניסה אוטומטית אם יש נתונים שמורים
+    function tryAutoLogin() {
+        const saved = localStorage.getItem(REMEMBER_KEY);
+        if (!saved) return;
+        try {
+            const parsed = JSON.parse(saved);
+            if (parsed.number && parsed.pin) {
+                document.getElementById('inputNumber').value = parsed.number;
+                document.getElementById('inputPin').value = parsed.pin;
+                checkStatus();
+            }
+        } catch (e) {
+            localStorage.removeItem(REMEMBER_KEY);
+        }
+    }
+
+    // תדירות הרענון האוטומטי + זמינות התראות הדפדפן נשלטים מהגדרות האדמין
+    async function loadPollInterval() {
+        try {
+            const response = await fetch('/api/public-notifications-config');
+            const config = await response.json();
+            pollIntervalMs = (config.my_status_poll_seconds || 10) * 1000;
+            browserNotifEnabled = config.browser_notif_enabled !== false;
+        } catch (e) {
+            pollIntervalMs = 10000;
+            browserNotifEnabled = true;
+        }
+    }
+
+    async function init() {
+        await loadPollInterval();
+        tryAutoLogin();
+    }
+    init();
+
+    // Enter key support
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (document.getElementById('loginSection').style.display !== 'none') checkStatus();
+        }
+    });
+</script>
+</body>
+</html>
