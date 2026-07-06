@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
@@ -341,6 +341,11 @@ def center():
     """Central display screen"""
     log_action('VIEW ACCESSED', 'Center screen')
     return render_template('center.html')
+
+@app.route('/sw.js')
+def service_worker():
+    """Serve the service worker from the root so its scope covers the whole site (not just /static/)"""
+    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
 @app.route('/stations')
 def stations():
