@@ -9,6 +9,7 @@ from datetime import datetime
 import threading
 import time
 import logging
+from pywebpush import webpush, WebPushException
 
 app = Flask(__name__)
 
@@ -53,6 +54,11 @@ config_lock = threading.Lock()
 
 CONFIG_FILE = 'config.json'
 
+# מפתחות VAPID ל-Web Push - נטענים ממשתני סביבה, לא מ-config.json (מפתח פרטי קריפטוגרפי, לא סיסמת אדמין)
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
+VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:elzamli@gmail.com')
+
 DEFAULT_NOTIFICATIONS_CONFIG = {
     'collect_phone_at_intake': False,
     'manual_enabled': True,
@@ -62,7 +68,7 @@ DEFAULT_NOTIFICATIONS_CONFIG = {
     'smart_recent_check_minutes': 10,
     'scheduler_interval_seconds': 5,
     'my_status_poll_seconds': 10,
-    'browser_notif_enabled': True
+    'push_notif_enabled': True
 }
 
 def log_action(action, details='', level='INFO'):
@@ -123,6 +129,40 @@ def send_sms_stub(phone_number, customer_number, message, source='manual'):
     """Single funnel point for all SMS 'sends' - logs only, no real provider"""
     log_action('SMS STUB', f'[{source}] To: {phone_number} | Customer: {customer_number} | Msg: "{message}"')
     return True
+
+
+def send_push_notification(subscription_row, title, body, tag='queue-status', url='/my-status'):
+    """Single funnel point for all Web Push sends. Deletes the subscription if it's expired/invalid."""
+    if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
+        log_action('PUSH SKIPPED', 'VAPID keys not configured', 'WARNING')
+        return False
+    try:
+        webpush(
+            subscription_info={
+                'endpoint': subscription_row['endpoint'],
+                'keys': {
+                    'p256dh': subscription_row['p256dh'],
+                    'auth': subscription_row['auth']
+                }
+            },
+            data=json.dumps({'title': title, 'body': body, 'tag': tag, 'url': url}),
+            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_claims={'sub': VAPID_CLAIM_EMAIL}
+        )
+        log_action('PUSH SENT', f"To subscription {subscription_row['id']} | \"{title}\"")
+        return True
+    except WebPushException as e:
+        status_code = e.response.status_code if e.response is not None else None
+        if status_code in (404, 410):
+            with db_lock:
+                conn = get_db_connection()
+                conn.execute('DELETE FROM push_subscriptions WHERE id = ?', (subscription_row['id'],))
+                conn.commit()
+                conn.close()
+            log_action('PUSH SUBSCRIPTION EXPIRED', f"Deleted subscription {subscription_row['id']}", 'WARNING')
+        else:
+            log_action('PUSH SEND ERROR', str(e), 'ERROR')
+        return False
 
 
 def get_db_connection():
@@ -278,6 +318,20 @@ def migrate_db():
         if 'notified_at' not in columns:
             cursor.execute("ALTER TABLE queue_entries ADD COLUMN notified_at TIMESTAMP")
             log_action('MIGRATE DB', 'Added notified_at column')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                queue_entry_id INTEGER NOT NULL,
+                customer_number INTEGER NOT NULL,
+                endpoint TEXT NOT NULL UNIQUE,
+                p256dh TEXT NOT NULL,
+                auth TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (queue_entry_id) REFERENCES queue_entries(id)
+            )
+        ''')
+
         conn.commit()
         conn.close()
     except Exception as e:
@@ -309,6 +363,11 @@ def create_indexes():
             CREATE INDEX IF NOT EXISTS idx_queue_entries_history_customer_number
             ON queue_entries_history(customer_number)
         ''')
+        # מנויי Push לפי שורת התור
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_push_subscriptions_queue_entry_id
+            ON push_subscriptions(queue_entry_id)
+        ''')
         conn.commit()
         conn.close()
         log_action('CREATE INDEXES', 'Performance indexes ensured')
@@ -330,6 +389,21 @@ def cleanup_old_phone_numbers():
         conn.close()
     except Exception as e:
         log_action('CLEANUP PHONES ERROR', str(e), 'ERROR')
+
+
+def cleanup_old_push_subscriptions():
+    """Delete push subscriptions older than 24 hours for privacy (same policy as phone numbers)"""
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute('''
+            DELETE FROM push_subscriptions
+            WHERE created_at < datetime('now', '-24 hours')
+        ''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        log_action('CLEANUP PUSH SUBSCRIPTIONS ERROR', str(e), 'ERROR')
 
 
 # =====================
@@ -583,6 +657,7 @@ def add_entry():
         return jsonify({'error': 'Customer number must be a number'}), 400
 
     cleanup_old_phone_numbers()
+    cleanup_old_push_subscriptions()
 
     notify_phone = None
     notify_station_name = None
@@ -826,11 +901,16 @@ def call_next_customer(station_id):
             conn.commit()
             log_action('CUSTOMER CALLED', f'Customer {entry["customer_number"]} called')
 
-            return jsonify({
+            called_entry_id = entry['id']
+            called_customer_number = entry['customer_number']
+            called_station_name = station_name
+
+            response = jsonify({
                 'success': True,
                 'customer_number': entry['customer_number'],
                 'message': f'Customer {entry["customer_number"]} called'
-            }), 200
+            })
+            response_status = 200
 
     except Exception as e:
         if conn:
@@ -840,6 +920,25 @@ def call_next_customer(station_id):
     finally:
         if conn:
             conn.close()
+
+    # שליחת Push אמיתית - מחוץ ל-db_lock, אחרי שהלקוח כבר נקרא בפועל
+    if get_notifications_config().get('push_notif_enabled', True):
+        try:
+            push_conn = get_db_connection()
+            push_cursor = push_conn.cursor()
+            push_cursor.execute('SELECT * FROM push_subscriptions WHERE queue_entry_id = ?', (called_entry_id,))
+            subscriptions = push_cursor.fetchall()
+            push_conn.close()
+            for subscription_row in subscriptions:
+                send_push_notification(
+                    subscription_row,
+                    '🔔 תורך הגיע!',
+                    f'תורך מספר {called_customer_number} הגיע! אנא הגש/י לתחנה: {called_station_name}'
+                )
+        except Exception as e:
+            log_action('PUSH TRIGGER ERROR', str(e), 'ERROR')
+
+    return response, response_status
 
 
 @app.route('/api/finish-customer', methods=['POST'])
@@ -1338,8 +1437,66 @@ def public_notifications_config():
     return jsonify({
         'collect_phone_at_intake': notif.get('collect_phone_at_intake', False),
         'my_status_poll_seconds': notif.get('my_status_poll_seconds', 10),
-        'browser_notif_enabled': notif.get('browser_notif_enabled', True)
+        'push_notif_enabled': notif.get('push_notif_enabled', True)
     })
+
+@app.route('/api/vapid-public-key')
+def vapid_public_key():
+    """Public VAPID key needed by the browser to subscribe to Web Push"""
+    if not VAPID_PUBLIC_KEY:
+        return jsonify({'error': 'Push notifications not configured'}), 503
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+@app.route('/api/save-push-subscription', methods=['POST'])
+def save_push_subscription():
+    """Save a Web Push subscription for a customer (requires PIN auth, same pattern as save-phone)"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    pin = str(data.get('pin', '')).strip()
+    subscription = data.get('subscription') or {}
+    endpoint = subscription.get('endpoint')
+    keys = subscription.get('keys') or {}
+    p256dh = keys.get('p256dh')
+    auth = keys.get('auth')
+
+    if not customer_number or not pin or not endpoint or not p256dh or not auth:
+        return jsonify({'error': 'Missing data'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT id FROM queue_entries
+            WHERE customer_number = ? AND pin = ? AND status IN ('waiting', 'called')
+            LIMIT 1
+        ''', (customer_number, pin))
+        entry = cursor.fetchone()
+
+        if not entry:
+            conn.close()
+            return jsonify({'error': 'מועמד לא נמצא או קוד PIN שגוי'}), 404
+
+        with db_lock:
+            cursor.execute('''
+                INSERT INTO push_subscriptions (queue_entry_id, customer_number, endpoint, p256dh, auth)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(endpoint) DO UPDATE SET
+                    queue_entry_id = excluded.queue_entry_id,
+                    customer_number = excluded.customer_number,
+                    p256dh = excluded.p256dh,
+                    auth = excluded.auth,
+                    created_at = CURRENT_TIMESTAMP
+            ''', (entry['id'], customer_number, endpoint, p256dh, auth))
+            conn.commit()
+
+        conn.close()
+        log_action('PUSH SUBSCRIPTION SAVED', f'Customer {customer_number}')
+        return jsonify({'success': True})
+
+    except Exception as e:
+        log_action('SAVE PUSH SUBSCRIPTION ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/admin/notifications')
 def admin_notifications():
@@ -1387,7 +1544,7 @@ def update_admin_notifications_config():
         'smart_recent_check_minutes': smart_recent_check_minutes,
         'scheduler_interval_seconds': scheduler_interval_seconds,
         'my_status_poll_seconds': my_status_poll_seconds,
-        'browser_notif_enabled': bool(data.get('browser_notif_enabled'))
+        'push_notif_enabled': bool(data.get('push_notif_enabled'))
     }
 
     try:
@@ -1992,6 +2149,7 @@ def api_my_status():
         return jsonify({'error': 'Missing data'}), 400
 
     cleanup_old_phone_numbers()
+    cleanup_old_push_subscriptions()
 
     try:
         conn = get_db_connection()
@@ -2077,6 +2235,7 @@ def save_phone():
         return jsonify({'error': 'מספר טלפון לא תקין (דוגמה: 0501234567)'}), 400
 
     cleanup_old_phone_numbers()
+    cleanup_old_push_subscriptions()
 
     try:
         conn = get_db_connection()

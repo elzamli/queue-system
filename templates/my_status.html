@@ -252,23 +252,21 @@
                 </div>
             </div>
 
-            <!-- Browser notification opt-in -->
-            <div class="phone-section" id="browserNotifSection" style="display: none;">
-                <h3>🔔 התראת דפדפן כשתורך יגיע</h3>
-                <div id="browserNotifPrompt">
+            <!-- Push notification opt-in -->
+            <div class="phone-section" id="pushNotifSection" style="display: none;">
+                <h3>🔔 התראת Push כשתורך יגיע</h3>
+                <div id="pushNotifPrompt">
                     <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
-                        תקבל התראת מערכת גם אם הטאב הזה לא פתוח מולך.
+                        תקבל התראת מערכת גם אם הטאב הזה סגור לגמרי או המסך נעול.
                     </p>
-                    <button class="btn btn-primary" id="enableNotifBtn" onclick="requestNotificationPermission()">🔔 אפשר התראות דפדפן</button>
+                    <button class="btn btn-primary" id="enablePushBtn" onclick="subscribeToPush()">🔔 אפשר התראות Push</button>
                 </div>
-                <div class="phone-success" id="browserNotifSuccess">
-                    <span>✅ התראות דפדפן מופעלות - תקבל התראה גם אם הטאב לא בפוקוס.</span>
+                <div class="phone-success" id="pushNotifSuccess">
+                    <span>✅ התראות Push מופעלות - תקבל התראה גם אם הטאב סגור.</span>
                 </div>
-                <div class="disclaimer" id="browserNotifBlocked" style="display: none;">
-                    ⚠️ התראות דפדפן חסומות. ניתן לשנות זאת בהגדרות האתר בדפדפן שלך.
+                <div class="disclaimer" id="pushNotifBlocked" style="display: none;">
+                    ⚠️ התראות חסומות. ניתן לשנות זאת בהגדרות האתר בדפדפן שלך.
                 </div>
-                <div id="notifDebugInfo" style="font-size: 10px; color: #aaa; margin-top: 8px; text-align: center;"></div>
-                <button class="btn btn-secondary" id="notifTestBtn" onclick="testNotificationNow()" style="margin-top: 8px;">🧪 שלח התראת בדיקה עכשיו</button>
             </div>
         </div>
     </div>
@@ -283,7 +281,7 @@
     // רענון אוטומטי (polling)
     let pollTimer = null;
     let pollIntervalMs = 10000;
-    let browserNotifEnabled = true;
+    let pushNotifEnabled = true;
 
     // הבלטת "הגיע התור" - צליל + הבהוב כותרת
     let audioCtx = null;
@@ -406,12 +404,11 @@
             renderPhoneNeeded();
         }
 
-        updateBrowserNotifUI();
+        updatePushNotifUI();
 
         if (previousStatus !== 'called' && data.status === 'called') {
             playAlertSound();
             startTitleFlash();
-            showBrowserNotification(data);
         }
     }
 
@@ -521,17 +518,17 @@
     }
 
     // ===== הבלטת "הגיע התור": התראת דפדפן (Web Notification) =====
-    function updateBrowserNotifUI() {
-        const section = document.getElementById('browserNotifSection');
-        if (!browserNotifEnabled || !('Notification' in window)) {
+    function updatePushNotifUI() {
+        const section = document.getElementById('pushNotifSection');
+        if (!pushNotifEnabled || !('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
             section.style.display = 'none';
             return;
         }
         section.style.display = 'block';
 
-        const prompt = document.getElementById('browserNotifPrompt');
-        const success = document.getElementById('browserNotifSuccess');
-        const blocked = document.getElementById('browserNotifBlocked');
+        const prompt = document.getElementById('pushNotifPrompt');
+        const success = document.getElementById('pushNotifSuccess');
+        const blocked = document.getElementById('pushNotifBlocked');
 
         if (Notification.permission === 'granted') {
             prompt.style.display = 'none';
@@ -546,104 +543,71 @@
             success.style.display = 'none';
             blocked.style.display = 'none';
         }
-
-        updateNotifDebugInfo();
-    }
-
-    // מידע דיאגנוסטי גלוי על המסך - שימושי לבדיקה בטלפון בלי כלי פיתוח
-    async function updateNotifDebugInfo() {
-        const el = document.getElementById('notifDebugInfo');
-        if (!el) return;
-        const parts = [];
-        parts.push('הרשאה: ' + (('Notification' in window) ? Notification.permission : 'לא נתמך בדפדפן'));
-        if ('serviceWorker' in navigator) {
-            try {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                parts.push('Service Worker: ' + (regs.length ? `רשום (${regs.length})` : 'עדיין לא רשום'));
-            } catch (e) {
-                parts.push('Service Worker: שגיאה - ' + e.message);
-            }
-        } else {
-            parts.push('Service Worker: לא נתמך בדפדפן');
-        }
-        el.textContent = parts.join(' | ');
-    }
-
-    async function testNotificationNow() {
-        const btn = document.getElementById('notifTestBtn');
-        const debugEl = document.getElementById('notifDebugInfo');
-        btn.disabled = true;
-        btn.textContent = '⏳ שולח...';
-
-        const result = await showBrowserNotification({ customer_number: currentNumber || 0, station_name: 'בדיקה' });
-
-        if (result.ok) {
-            btn.textContent = `✅ נשלח (${result.via})`;
-            debugEl.textContent = 'הפעולה הצליחה - בדוק את מגירת ההתראות באנדרואיד';
-        } else {
-            btn.textContent = '❌ נכשל';
-            debugEl.textContent = 'תוצאת בדיקה: ' + result.reason;
-        }
-
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = '🧪 שלח התראת בדיקה עכשיו';
-        }, 6000);
-    }
-
-    async function requestNotificationPermission() {
-        if (!('Notification' in window)) return;
-        try {
-            await Notification.requestPermission();
-        } catch (e) {
-            // דפדפן ישן עם API מבוסס callback - נתעלם, updateBrowserNotifUI ישאיר את מצב הבקשה
-        }
-        updateBrowserNotifUI();
     }
 
     function registerServiceWorker() {
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.register('/sw.js').catch((e) => {
-            console.warn('Service worker registration failed, will fall back to plain Notification:', e);
+            console.warn('Service worker registration failed:', e);
         });
     }
 
-    async function showBrowserNotification(data) {
-        if (!browserNotifEnabled || !('Notification' in window) || Notification.permission !== 'granted') {
-            return { ok: false, reason: 'אין הרשאה או שהאפשרות כבויה' };
+    // ממיר את מפתח VAPID הציבורי (base64url) לפורמט ש-pushManager.subscribe דורש
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; i++) {
+            outputArray[i] = rawData.charCodeAt(i);
         }
+        return outputArray;
+    }
 
-        const title = '🔔 תורך הגיע!';
-        const options = { body: `מספר ${data.customer_number} - הגש/י לתחנה: ${data.station_name}` };
+    async function subscribeToPush() {
+        const btn = document.getElementById('enablePushBtn');
+        if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
-        // כרום באנדרואיד דוחה את new Notification() ודורש הצגה דרך Service Worker
-        let swErrorMessage = null;
-        if ('serviceWorker' in navigator) {
-            try {
-                const registration = await Promise.race([
-                    navigator.serviceWorker.ready,
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('פסק זמן בהמתנה ל-Service Worker (3 שניות)')), 3000))
-                ]);
-                await registration.showNotification(title, options);
-                return { ok: true, via: 'service-worker' };
-            } catch (e) {
-                swErrorMessage = e.message;
-                console.warn('Service worker notification failed, falling back to plain Notification:', e);
-            }
-        } else {
-            swErrorMessage = 'serviceWorker לא נתמך בדפדפן';
-        }
+        btn.disabled = true;
+        btn.textContent = '⏳ מפעיל...';
 
         try {
-            const n = new Notification(title, options);
-            n.onclick = () => {
-                window.focus();
-                n.close();
-            };
-            return { ok: true, via: 'plain-notification' };
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                updatePushNotifUI();
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.ready;
+            const keyResponse = await fetch('/api/vapid-public-key');
+            if (!keyResponse.ok) throw new Error('vapid key unavailable');
+            const { publicKey } = await keyResponse.json();
+
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
+            });
+
+            const saveResponse = await fetch('/api/save-push-subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_number: currentNumber,
+                    pin: currentPin,
+                    subscription: subscription.toJSON()
+                })
+            });
+
+            if (!saveResponse.ok) {
+                const err = await saveResponse.json();
+                throw new Error(err.error || 'שמירת המנוי נכשלה');
+            }
         } catch (e) {
-            console.error('Browser notification failed:', e);
-            return { ok: false, reason: `SW: ${swErrorMessage} | Fallback: ${e.message}` };
+            console.error('Push subscribe failed:', e);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🔔 אפשר התראות Push';
+            updatePushNotifUI();
         }
     }
 
@@ -707,10 +671,10 @@
             const response = await fetch('/api/public-notifications-config');
             const config = await response.json();
             pollIntervalMs = (config.my_status_poll_seconds || 10) * 1000;
-            browserNotifEnabled = config.browser_notif_enabled !== false;
+            pushNotifEnabled = config.push_notif_enabled !== false;
         } catch (e) {
             pollIntervalMs = 10000;
-            browserNotifEnabled = true;
+            pushNotifEnabled = true;
         }
     }
 

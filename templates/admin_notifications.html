@@ -470,11 +470,11 @@
 
                 <div class="toggle-row">
                     <div>
-                        <div class="label">הצעת התראות דפדפן ללקוח</div>
-                        <div class="hint">מציג במסך "הסטטוס שלי" כפתור לאפשר התראת מערכת (Web Notification) כשהתור מגיע</div>
+                        <div class="label">הצעת התראות Push ללקוח</div>
+                        <div class="hint">מציג במסך "הסטטוס שלי" כפתור לאפשר התראת Push אמיתית מהשרת כשהתור מגיע - עובד גם כשהטאב סגור/המסך נעול</div>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" id="browserNotifEnabled" ${c.browser_notif_enabled ? 'checked' : ''}>
+                        <input type="checkbox" id="pushNotifEnabled" ${c.push_notif_enabled ? 'checked' : ''}>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -504,7 +504,7 @@
                 smart_recent_check_minutes: parseInt(document.getElementById('smartRecentCheckMinutes').value),
                 scheduler_interval_seconds: parseInt(document.getElementById('schedulerIntervalSeconds').value),
                 my_status_poll_seconds: parseInt(document.getElementById('myStatusPollSeconds').value),
-                browser_notif_enabled: document.getElementById('browserNotifEnabled').checked
+                push_notif_enabled: document.getElementById('pushNotifEnabled').checked
             };
 
             try {
