@@ -538,11 +538,24 @@
             prompt.style.display = 'none';
             success.style.display = 'none';
             blocked.style.display = 'block';
+            reportPushPermissionDenied();
         } else {
             prompt.style.display = 'block';
             success.style.display = 'none';
             blocked.style.display = 'none';
         }
+    }
+
+    // מדווח לשרת שהלקוח חסם התראות, כדי שהמפעיל/אדמין יראו את זה
+    function reportPushPermissionDenied() {
+        if (!currentNumber || !currentPin) return;
+        fetch('/api/report-push-permission', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ customer_number: currentNumber, pin: currentPin, state: 'denied' })
+        }).catch(() => {
+            // תקלת רשת חולפת - לא קריטי
+        });
     }
 
     function registerServiceWorker() {

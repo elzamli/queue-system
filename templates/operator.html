@@ -461,6 +461,7 @@
             <div class="display-section">
                 <div class="display-label">🔔 בראיון כעת</div>
                 <div class="current-number" id="currentNumber">-</div>
+                <div id="pushStatusIndicator" style="font-size: 13px; color: #666; margin-top: 6px;"></div>
             </div>
 
             <div class="queue-info" id="queueInfo">
@@ -655,6 +656,22 @@ function getStationId() {
             }
         }
 
+        function formatPushStatus(station) {
+            if (station.push_status === 'denied') {
+                return '🚫 הלקוח חסם התראות Push';
+            }
+            if (station.push_status === 'subscribed') {
+                if (station.push_last_displayed_at) {
+                    return '✅ רשום ל-Push - הוצג במכשיר';
+                }
+                if (station.push_last_sent_at) {
+                    return '🔔 רשום ל-Push - נשלח, טרם אושרה הצגה';
+                }
+                return '🔔 הלקוח רשום ל-Push';
+            }
+            return 'הלקוח לא רשום ל-Push';
+        }
+
         // עדכון מסך התצוגה
         async function updateDisplay() {
             try {
@@ -669,12 +686,15 @@ function getStationId() {
 
                 if (station) {
                     // עדכן את המספר הנוכחי
+                    const pushIndicator = document.getElementById('pushStatusIndicator');
                     if (station.current_number) {
                         document.getElementById('currentNumber').textContent = station.current_number;
                         currentCustomer = station.current_number;
+                        pushIndicator.textContent = formatPushStatus(station);
                     } else {
                         document.getElementById('currentNumber').innerHTML = '<span class="no-customer">אין בשירות</span>';
                         currentCustomer = null;
+                        pushIndicator.textContent = '';
                     }
 
                     // עדכן כפתור SMS

@@ -21,10 +21,25 @@ self.addEventListener('push', (event) => {
     const options = {
         body: data.body || '',
         tag: data.tag || 'queue-status',
+        icon: data.icon || '/static/icon.png',
+        badge: data.icon || '/static/icon.png',
         data: { url: data.url || '/my-status' }
     };
 
-    event.waitUntil(self.registration.showNotification(title, options));
+    event.waitUntil(
+        self.registration.showNotification(title, options).then(() => {
+            // אישור מסירה - מדווח לשרת שההתראה אכן הוצגה בפועל על המכשיר
+            if (data.subscription_id) {
+                return fetch('/api/push-displayed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription_id: data.subscription_id })
+                }).catch(() => {
+                    // אין רשת כרגע - לא קריטי, זה רק אישור מסירה best-effort
+                });
+            }
+        })
+    );
 });
 
 self.addEventListener('notificationclick', (event) => {

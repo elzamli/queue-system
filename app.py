@@ -145,10 +145,18 @@ def send_push_notification(subscription_row, title, body, tag='queue-status', ur
                     'auth': subscription_row['auth']
                 }
             },
-            data=json.dumps({'title': title, 'body': body, 'tag': tag, 'url': url}),
+            data=json.dumps({
+                'title': title, 'body': body, 'tag': tag, 'url': url,
+                'icon': '/static/icon.png', 'subscription_id': subscription_row['id']
+            }),
             vapid_private_key=VAPID_PRIVATE_KEY,
             vapid_claims={'sub': VAPID_CLAIM_EMAIL}
         )
+        with db_lock:
+            conn = get_db_connection()
+            conn.execute('UPDATE push_subscriptions SET last_sent_at = CURRENT_TIMESTAMP WHERE id = ?', (subscription_row['id'],))
+            conn.commit()
+            conn.close()
         log_action('PUSH SENT', f"To subscription {subscription_row['id']} | \"{title}\"")
         return True
     except WebPushException as e:
@@ -318,6 +326,9 @@ def migrate_db():
         if 'notified_at' not in columns:
             cursor.execute("ALTER TABLE queue_entries ADD COLUMN notified_at TIMESTAMP")
             log_action('MIGRATE DB', 'Added notified_at column')
+        if 'push_permission_state' not in columns:
+            cursor.execute("ALTER TABLE queue_entries ADD COLUMN push_permission_state TEXT")
+            log_action('MIGRATE DB', 'Added push_permission_state column')
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -328,9 +339,20 @@ def migrate_db():
                 p256dh TEXT NOT NULL,
                 auth TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_sent_at TIMESTAMP,
+                last_displayed_at TIMESTAMP,
                 FOREIGN KEY (queue_entry_id) REFERENCES queue_entries(id)
             )
         ''')
+
+        cursor.execute("PRAGMA table_info(push_subscriptions)")
+        push_columns = {col[1] for col in cursor.fetchall()}
+        if 'last_sent_at' not in push_columns:
+            cursor.execute("ALTER TABLE push_subscriptions ADD COLUMN last_sent_at TIMESTAMP")
+            log_action('MIGRATE DB', 'Added push_subscriptions.last_sent_at column')
+        if 'last_displayed_at' not in push_columns:
+            cursor.execute("ALTER TABLE push_subscriptions ADD COLUMN last_displayed_at TIMESTAMP")
+            log_action('MIGRATE DB', 'Added push_subscriptions.last_displayed_at column')
 
         conn.commit()
         conn.close()
@@ -1193,15 +1215,29 @@ def get_entries():
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT qe.*, s.name as station_name, s.queue_group_id
+            SELECT qe.*, s.name as station_name, s.queue_group_id,
+                   COUNT(ps.id) as push_subscribed,
+                   MAX(ps.last_sent_at) as push_last_sent_at,
+                   MAX(ps.last_displayed_at) as push_last_displayed_at
             FROM queue_entries qe
             JOIN stations s ON qe.station_id = s.id
+            LEFT JOIN push_subscriptions ps ON ps.queue_entry_id = qe.id
+            GROUP BY qe.id
             ORDER BY qe.created_at DESC
         ''')
-        
+
         entries = cursor.fetchall()
-        result = [dict(entry) for entry in entries]
-        
+        result = []
+        for entry in entries:
+            row = dict(entry)
+            if row['push_subscribed']:
+                row['push_status'] = 'subscribed'
+            elif row.get('push_permission_state') == 'denied':
+                row['push_status'] = 'denied'
+            else:
+                row['push_status'] = 'not_registered'
+            result.append(row)
+
         conn.close()
         return jsonify(result)
     except Exception as e:
@@ -1496,6 +1532,59 @@ def save_push_subscription():
 
     except Exception as e:
         log_action('SAVE PUSH SUBSCRIPTION ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/report-push-permission', methods=['POST'])
+def report_push_permission():
+    """Customer's browser reports its Notification permission state (used mainly for 'denied')"""
+    data = request.json
+    customer_number = data.get('customer_number')
+    pin = str(data.get('pin', '')).strip()
+    state = data.get('state')
+
+    if not customer_number or not pin or state not in ('granted', 'denied', 'default'):
+        return jsonify({'error': 'Missing or invalid data'}), 400
+
+    try:
+        with db_lock:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE queue_entries
+                SET push_permission_state = ?
+                WHERE customer_number = ? AND pin = ? AND status IN ('waiting', 'called')
+            ''', (state, customer_number, pin))
+            updated = cursor.rowcount
+            conn.commit()
+            conn.close()
+
+        if updated == 0:
+            return jsonify({'error': 'מועמד לא נמצא או קוד PIN שגוי'}), 404
+        return jsonify({'success': True})
+    except Exception as e:
+        log_action('REPORT PUSH PERMISSION ERROR', str(e), 'ERROR')
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/push-displayed', methods=['POST'])
+def push_displayed():
+    """Service worker confirms it actually displayed a push notification on the device"""
+    data = request.json
+    subscription_id = data.get('subscription_id')
+
+    if not subscription_id:
+        return jsonify({'error': 'Missing subscription_id'}), 400
+
+    try:
+        with db_lock:
+            conn = get_db_connection()
+            conn.execute('''
+                UPDATE push_subscriptions SET last_displayed_at = CURRENT_TIMESTAMP WHERE id = ?
+            ''', (subscription_id,))
+            conn.commit()
+            conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        log_action('PUSH DISPLAYED ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500
 
 @app.route('/admin/notifications')
@@ -2092,14 +2181,31 @@ def operator_data(station_id):
         
         # Get current customer (called)
         cursor.execute('''
-            SELECT customer_number, phone_number FROM queue_entries
+            SELECT id, customer_number, phone_number, push_permission_state FROM queue_entries
             WHERE station_id = ? AND status = 'called'
             LIMIT 1
         ''', (station_id,))
         current = cursor.fetchone()
         current_number = current['customer_number'] if current else None
         has_phone = bool(current['phone_number']) if current else False
-        
+
+        push_status = 'not_registered'
+        push_last_sent_at = None
+        push_last_displayed_at = None
+        if current:
+            if current['push_permission_state'] == 'denied':
+                push_status = 'denied'
+            cursor.execute('''
+                SELECT last_sent_at, last_displayed_at FROM push_subscriptions
+                WHERE queue_entry_id = ?
+                ORDER BY id DESC LIMIT 1
+            ''', (current['id'],))
+            push_sub = cursor.fetchone()
+            if push_sub:
+                push_status = 'subscribed'
+                push_last_sent_at = push_sub['last_sent_at']
+                push_last_displayed_at = push_sub['last_displayed_at']
+
         # Get waiting list
         cursor.execute('''
             SELECT customer_number FROM queue_entries 
@@ -2122,11 +2228,14 @@ def operator_data(station_id):
             'restricted': station['restricted'],
             'current_number': current_number,
             'has_phone': has_phone,
+            'push_status': push_status,
+            'push_last_sent_at': push_last_sent_at,
+            'push_last_displayed_at': push_last_displayed_at,
             'manual_sms_enabled': get_notifications_config().get('manual_enabled', True),
             'waiting_list': waiting_list,
             'waiting_count': len(waiting_list)
         })
-        
+
     except Exception as e:
         log_action('OPERATOR DATA ERROR', str(e), 'ERROR')
         return jsonify({'error': str(e)}), 500

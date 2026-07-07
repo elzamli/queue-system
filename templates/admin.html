@@ -544,11 +544,12 @@
                             <th>תחנה</th>
                             <th>סטטוס</th>
                             <th>זמן יצירה</th>
+                            <th>Push</th>
                             <th>פעולות</th>
                         </tr>
                     </thead>
                     <tbody id="entriesBody">
-                        <tr><td colspan="5" style="text-align: center; padding: 40px;">טוען...</td></tr>
+                        <tr><td colspan="6" style="text-align: center; padding: 40px;">טוען...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1142,7 +1143,7 @@ function displayEntries(entries) {
     const tbody = document.getElementById('entriesBody');  // ← הטבלה הנכונה!
     
     if (entries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">אין רשומות</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">אין רשומות</td></tr>';
         return;
     }
 
@@ -1158,12 +1159,20 @@ function displayEntries(entries) {
 
         const createdAt = new Date(entry.created_at).toLocaleString('he-IL');
 
+        const pushLabels = {
+            'subscribed': entry.push_last_displayed_at ? '✅ הוצג' : (entry.push_last_sent_at ? '🔔 נשלח' : '🔔 רשום'),
+            'denied': '🚫 חסם',
+            'not_registered': '—'
+        };
+        const pushText = pushLabels[entry.push_status] || '—';
+
         return `
             <tr>
                 <td><strong>${entry.customer_number}</strong></td>
                 <td>${entry.station_name}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${createdAt}</td>
+                <td>${pushText}</td>
                 <td>
                     <button class="btn-small" onclick="openEditModal(${entry.id}, ${entry.customer_number}, '${entry.status}')">ערוך</button>
                     <button class="btn-small delete" onclick="deleteEntry(${entry.id})">מחק</button>
